@@ -12,7 +12,7 @@ def test_database_ops():
     # 1) Create a user
     new_user = User(
         id=str(uuid.uuid4()),
-        email="tester@example.com",
+        email=f"tester+{uuid.uuid4()}@example.com",
         password_hash="fakehash"
     )
     session.add(new_user)
@@ -21,11 +21,11 @@ def test_database_ops():
     # 2) Create a persona
     new_persona = Persona(
         id=str(uuid.uuid4()),
-        owner_user_id=new_user.id,
+        owner_id=new_user.id,
         name="Test Persona",
         description="A test persona.",
         persona_json={"interests": ["tech", "music"], "curiosity": 0.7},
-        visibility="private"
+        is_public=True
     )
     session.add(new_persona)
     session.commit()

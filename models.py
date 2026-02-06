@@ -1,7 +1,9 @@
-from sqlalchemy import Column, String, Text, Enum, JSON, ForeignKey, TIMESTAMP
+from sqlalchemy import Column, String, Text, Enum, JSON, ForeignKey, TIMESTAMP, Boolean, Integer
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from db import Base
+from sqlalchemy.dialects.postgresql import UUID
+import uuid
 import enum
 
 class VisibilityEnum(enum.Enum):
@@ -10,8 +12,7 @@ class VisibilityEnum(enum.Enum):
 
 class User(Base):
     __tablename__ = "users"
-    
-    id = Column(String, primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(Text, unique=True, nullable=False)
     password_hash = Column(Text, nullable=False)
 
@@ -20,13 +21,13 @@ class User(Base):
 class Persona(Base):
     __tablename__ = "personas"
 
-    id = Column(String, primary_key=True)
-    owner_user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    owner_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
     name = Column(Text, nullable=False)
     description = Column(Text)
     persona_json = Column(JSON, nullable=False)
-    visibility = Column(Enum(VisibilityEnum), default=VisibilityEnum.private)
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+    is_public = Column(Boolean, default=False)
 
     owner = relationship("User", back_populates="personas")
