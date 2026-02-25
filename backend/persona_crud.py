@@ -2,15 +2,23 @@
 from db import SessionLocal
 from models import Persona
 
-def create_persona(user_id, name, description, persona_json, is_public=False):
+def create_persona(user_id, name, description, persona_json, is_public, risk, attention, patience, 
+                    politics, gender, age, race):
     session = SessionLocal()
     persona = Persona(
         owner_id=user_id,
         name=name,
         description=description,
         persona_json=persona_json,
-        is_public=is_public
-    )
+        is_public=is_public,
+        risk = risk,
+        attention = attention,
+        patience = patience,
+        politics = politics,
+        gender = gender,
+        age = age,
+        race = race
+        )
     session.add(persona)
     session.commit()
     session.refresh(persona)
