@@ -7,12 +7,12 @@ your_project/
 ├── requirements.txt
 │
 ├── config.py # loads env variables (including DATABASE_URL)
-├── db.py # SQLAlchemy engine + SessionLocal + Base
+├── database.py # SQLAlchemy engine + SessionLocal + Base
 ├── models.py # SQLAlchemy ORM models
 │
 ├── create_tables.py # run once to create DB schema
 ├── test_connection.py # verify DB connectivity
-├── test_db_ops.py # verify DB read/write works
+├── test_database_ops.py # verify database read/write works
 │
 ├── backend/
 │ ├── **init**.py

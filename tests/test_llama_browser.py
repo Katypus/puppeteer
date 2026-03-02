@@ -9,8 +9,8 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.firefox.options import Options
 from backend.llama_functs import running_prompt, summarize_page, query_llama, build_prompt, validate_action, execute_action
-from db import SessionLocal
-from models import User, Persona
+from backend.database import SessionLocal
+from backend.models import User, Persona
 import uuid
 import json
 
@@ -29,10 +29,10 @@ ALLOWED_ACTIONS = {"click", "scroll", "wait", "search", "exit"}
 
 def main():
     
-    # use db session local to get Brad from database
+    # use database session local to get Brad from database
     session = SessionLocal()
     persona = get_persona_by_name(session, "Brad")
-    print(persona.name, persona.persona_json)
+    print(persona.name, persona.interests)
 
     driver = webdriver.Chrome()
 

@@ -1,8 +1,8 @@
 '''
 Tests for basic database operations: creating a user, creating a persona, and querying it back.
 '''
-from db import SessionLocal
-from models import User, Persona
+from backend.database import SessionLocal
+from backend.models import User, Persona
 import uuid
 import json
 

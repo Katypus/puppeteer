@@ -126,7 +126,7 @@ Race: {json.dumps(persona.race)}
 Gender: {json.dumps(persona.gender)}
 
 Persona interests:
-{json.dumps(persona.persona_json, indent=2)}
+{json.dumps(persona.interests, indent=2)}
 
 Page summary:
 {json.dumps(page_summary, indent=2)}
@@ -137,7 +137,7 @@ Make browsing decisions this person would make. Respond with JSON only.
 def running_prompt(persona, page_summary):
     return f"""
     Persona details: {json.dumps(persona.age)} year old {json.dumps(persona.race)} {json.dumps(persona.gender)}
-    Interests: {json.dumps(persona.persona_json, indent=2)}
+    Interests: {json.dumps(persona.interests, indent=2)}
     Page summary: {json.dumps(page_summary, indent=2)}
     Make browsing decisions this person would make. Respond with JSON only.
     """

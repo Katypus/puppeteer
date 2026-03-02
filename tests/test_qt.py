@@ -199,9 +199,9 @@ class PersonaApp(QWidget):
             QMessageBox.warning(self, "Error", "Name is required")
             return
 
-        persona_json = {"interests": interests}
+        interests = {"interests": interests}
 
-        p = create_persona(USER_ID, name, description, persona_json, is_public, risk, attention, patience, politics,
+        p = create_persona(USER_ID, name, description, interests, is_public, risk, attention, patience, politics,
                             gender=gender, race=race, age=age)
 
         QMessageBox.information(self, "Success", f"Created persona: {p.name}")
