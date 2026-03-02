@@ -34,7 +34,7 @@ You are a web browsing persona.
 Persona:
 - Name, Age, Gender, Race: {persona.name}, {persona.age}, {persona.gender}, {persona.race}
 - Interests: {persona.interests}
-- Political Index (0 is left, 10 is right): {persona.political_index}
+- Political Index (0 is left, 10 is right): {persona.politics}
 - Risk tolerance: {persona.risk}
 
 Current Page:

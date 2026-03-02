@@ -55,16 +55,34 @@ browser.browserAction.onClicked.addListener(() => {
   });
 });
 
-const BACKEND_URL = "http://127.0.0.1:8000/decide";
+const DECIDE_URL = "http://127.0.0.1:8000/decide";
+const DEFAULT_PERSONA = {
+  name: "Brad",
+  interests: ["MAGA", "electric vehicles", "crypto", "guns"],
+  description: "",
+  is_public: false,
+  age: 30,
+  gender: "male",
+  race: "white",
+  politics: 9,
+  risk: 8,
+  attention: 1,
+  patience: 1,
+};
 
 browser.runtime.onMessage.addListener(async (msg) => {
   if (msg?.type !== "PAGE_SUMMARY") return;
 
+  const decideRequest = {
+    persona: DEFAULT_PERSONA,
+    page: msg.payload,
+  };
+
   try {
-    const res = await fetch(BACKEND_URL, {
+    const res = await fetch(DECIDE_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ summary: msg.payload }),
+      body: JSON.stringify(decideRequest),
     });
 
     if (!res.ok) {

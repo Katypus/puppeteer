@@ -1,4 +1,5 @@
 (() => {
+  console.log("[content] loaded on", location.href);
   // ---------- helpers ----------
   const absUrl = (href) => {
     try {
@@ -12,7 +13,6 @@
     try {
       const u = new URL(url);
       u.hash = "";
-      // Optional: strip common tracking params
       [
         "utm_source",
         "utm_medium",
@@ -35,14 +35,9 @@
   };
 
   const isVisibleEnough = (el) => {
-    // quick visibility heuristics
     const rect = el.getBoundingClientRect();
-    if (rect.width < 30 || rect.height < 14) return false; // too small to be a “real click”
-    if (rect.bottom < 0 || rect.top > window.innerHeight * 2) {
-      // still allow below-the-fold, but avoid far-off junk during initial load
-      // (tweak/remove if you want full-page scanning)
-      return false;
-    }
+    if (rect.width < 30 || rect.height < 14) return false;
+    if (rect.bottom < 0 || rect.top > window.innerHeight * 2) return false;
     const style = window.getComputedStyle(el);
     if (
       style.display === "none" ||
@@ -69,7 +64,6 @@
   };
 
   const isInChromeLikeNav = (a) => {
-    // exclude links inside typical nav furniture
     return Boolean(
       a.closest(
         "header, nav, footer, [role='navigation'], [role='banner'], [role='contentinfo']",
@@ -78,12 +72,10 @@
   };
 
   const looksLikeButtonOrUI = (a) => {
-    // exclude UI widgets masquerading as links
     const role = a.getAttribute("role") || "";
     const aria = (a.getAttribute("aria-label") || "").toLowerCase();
     const text = (a.textContent || "").trim().toLowerCase();
     if (role.toLowerCase() === "button") return true;
-    // common “utility” clicks on SERPs and apps
     const uiWords = [
       "sign in",
       "log in",
@@ -102,7 +94,28 @@
     return false;
   };
 
-  // Google-specific: pull outbound link from /url?q=
+  function waitForRealLinks(timeout = 3000) {
+    return new Promise((resolve) => {
+      const start = Date.now();
+
+      const check = () => {
+        const links = document.querySelectorAll("a[href]");
+        if (links.length > 20) {
+          resolve();
+          return;
+        }
+
+        if (Date.now() - start > timeout) {
+          resolve(); // give up after timeout
+          return;
+        }
+
+        requestAnimationFrame(check);
+      };
+
+      check();
+    });
+  }
   const unwrapGoogleUrl = (url) => {
     try {
       const u = new URL(url);
@@ -117,13 +130,11 @@
   };
 
   const isGoogleVerticalOrInternal = (url) => {
-    // filters "Images", "News", "Shopping", "AI mode", etc.
     try {
       const u = new URL(url);
       const host = u.hostname;
       if (!host.includes("google.")) return false;
 
-      // Keep outbound unwrapped URLs; filter internal verticals
       const p = u.pathname;
       if (p.startsWith("/search")) return true;
       if (p.startsWith("/imgres")) return true;
@@ -136,9 +147,8 @@
       if (p.startsWith("/setprefs")) return true;
       if (p.startsWith("/advanced_search")) return true;
 
-      // Google’s own “tabs” often have tbm=... etc.
       const tbm = u.searchParams.get("tbm");
-      if (tbm && tbm !== "vid") return true; // images/news/shopping/books...
+      if (tbm && tbm !== "vid") return true;
       return false;
     } catch {
       return false;
@@ -146,28 +156,20 @@
   };
 
   const scoreAnchor = (a, finalUrl) => {
-    // Higher score = more “human-likely”
     let score = 0;
 
     const text = (a.textContent || "").trim();
     const aria = (a.getAttribute("aria-label") || "").trim();
     const label = text || aria;
 
-    // prefer descriptive link text
     if (label.length >= 20) score += 3;
     else if (label.length >= 8) score += 1;
 
-    // big boost if it looks like a “result title”
-    // Google/Bing/etc often use an <h3> inside the clickable <a>.
     if (a.querySelector("h1,h2,h3")) score += 8;
 
-    // de-prioritize nav furniture
     if (isInChromeLikeNav(a)) score -= 6;
-
-    // de-prioritize UI / control-like links
     if (looksLikeButtonOrUI(a)) score -= 6;
 
-    // de-prioritize same-page and internal page chrome
     try {
       const u = new URL(finalUrl);
       if (
@@ -178,89 +180,237 @@
         score -= 8;
     } catch {}
 
-    // prefer links in main/article containers when present
     if (a.closest("main, article, [role='main'], #search")) score += 4;
 
-    // slight preference to above-the-fold items
     const r = a.getBoundingClientRect();
     if (r.top >= 0 && r.top <= window.innerHeight) score += 2;
 
     return score;
   };
 
-  // ---------- extraction ----------
-  const title = document.title || "";
-  const href = location.href;
+  // ---------- decision execution helpers ----------
+  function findElement(target = {}) {
+    const { selector, text, hrefIncludes } = target;
 
-  const anchors = Array.from(document.querySelectorAll("a[href]"));
+    if (selector) {
+      const el = document.querySelector(selector);
+      if (el) return el;
+    }
 
-  const candidates = [];
+    if (text) {
+      const normalized = text.trim().toLowerCase();
+      const candidates = Array.from(
+        document.querySelectorAll(
+          "a, button, [role='button'], input[type='submit'], input[type='button']",
+        ),
+      );
 
-  for (const a of anchors) {
-    const raw = a.getAttribute("href");
-    let url = absUrl(raw);
-    if (!url || hasJunkyScheme(url)) continue;
+      const exact =
+        candidates.find(
+          (e) =>
+            (e.innerText || e.value || "").trim().toLowerCase() === normalized,
+        ) ||
+        candidates.find((e) =>
+          (e.innerText || e.value || "")
+            .trim()
+            .toLowerCase()
+            .includes(normalized),
+        );
 
-    // If on Google, unwrap /url?q= into outbound
-    url = unwrapGoogleUrl(url);
-    if (!url || hasJunkyScheme(url)) continue;
+      if (exact) return exact;
+    }
 
-    // Filter Google verticals/internal chrome
-    if (isGoogleVerticalOrInternal(absUrl(raw))) continue;
+    if (hrefIncludes) {
+      const needle = hrefIncludes.toLowerCase();
+      const candidates = Array.from(document.querySelectorAll("a[href]"));
+      const el = candidates.find((a) =>
+        (a.href || "").toLowerCase().includes(needle),
+      );
+      if (el) return el;
+    }
 
-    // Basic “human click” filters
-    const label =
-      (a.textContent || "").trim() ||
-      (a.getAttribute("aria-label") || "").trim();
-    if (!label || label.length < 6) continue; // kills “empty rows” and icon-only anchors
-    if (!isVisibleEnough(a)) continue;
-
-    const finalUrl = absUrl(url) || url;
-    const score = scoreAnchor(a, finalUrl);
-
-    if (score < 3) continue; // threshold: tune this up/down
-
-    candidates.push({
-      href: finalUrl,
-      text: label.slice(0, 200),
-      score,
-    });
+    return null;
   }
 
-  // ---------- rank + dedupe ----------
-  candidates.sort((a, b) => b.score - a.score);
+  function executeDecision(decision) {
+    if (!decision || !decision.action) return;
 
-  const seenUrl = new Set();
-  const seenDomain = new Map(); // domain -> count
-  const topLinks = [];
+    switch (decision.action) {
+      case "click": {
+        const el = findElement(decision.target);
+        if (!el)
+          return console.warn(
+            "[executor] click target not found:",
+            decision.target,
+          );
+        el.scrollIntoView({ block: "center", behavior: "smooth" });
+        el.click();
+        return;
+      }
+      case "scroll": {
+        const v = decision.value;
+        if (v === "down")
+          window.scrollBy({
+            top: window.innerHeight * 0.9,
+            behavior: "smooth",
+          });
+        else if (v === "up")
+          window.scrollBy({
+            top: -window.innerHeight * 0.9,
+            behavior: "smooth",
+          });
+        else {
+          const px = Number(v);
+          if (!Number.isNaN(px))
+            window.scrollBy({ top: px, behavior: "smooth" });
+        }
+        return;
+      }
+      case "navigate": {
+        const url = decision.value;
+        if (typeof url === "string" && url) window.location.href = url;
+        return;
+      }
+      case "type": {
+        const el = findElement(decision.target);
+        if (!el)
+          return console.warn(
+            "[executor] type target not found:",
+            decision.target,
+          );
+        const value = decision.value;
+        if (typeof value !== "string") return;
 
-  for (const c of candidates) {
-    const key = normForDedup(c.href);
-    if (seenUrl.has(key)) continue;
-
-    const domain = getDomain(c.href);
-    const count = seenDomain.get(domain) || 0;
-    if (domain && count >= 2) continue; // don’t let one domain dominate
-
-    seenUrl.add(key);
-    if (domain) seenDomain.set(domain, count + 1);
-
-    topLinks.push({ text: c.text, href: c.href });
-
-    if (topLinks.length >= 10) break;
+        el.focus();
+        if ("value" in el) {
+          el.value = value;
+          el.dispatchEvent(new Event("input", { bubbles: true }));
+          el.dispatchEvent(new Event("change", { bubbles: true }));
+        } else if (el.isContentEditable) {
+          el.textContent = value;
+          el.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+        return;
+      }
+      case "noop":
+      default:
+        return;
+    }
   }
 
-  const payload = {
-    title,
-    href,
-    topLinks,
-    extractedAt: new Date().toISOString(),
-  };
+  async function sendSummaryToBackground(payload) {
+    // If you ever run in a non-extension environment, avoid crashing:
+    if (typeof browser === "undefined" || !browser.runtime?.sendMessage) {
+      console.warn("[sensor] browser.runtime.sendMessage not available");
+      return null;
+    }
 
-  console.log("[sensor] page summary extracted:", payload);
-  console.table(
-    topLinks.map((l, i) => ({ rank: i + 1, text: l.text, href: l.href })),
-  );
+    try {
+      return await browser.runtime.sendMessage({
+        type: "PAGE_SUMMARY",
+        payload,
+      });
+    } catch (e) {
+      console.warn("[sensor] sendMessage failed:", e);
+      return null;
+    }
+  }
 
-  return payload;
+  // ---------- extraction (your code, wrapped) ----------
+  function extractSummary() {
+    const title = document.title || "";
+    const href = location.href;
+
+    const anchors = Array.from(document.querySelectorAll("a[href]"));
+    const candidates = [];
+
+    for (const a of anchors) {
+      const raw = a.getAttribute("href");
+      let url = absUrl(raw);
+      if (!url || hasJunkyScheme(url)) continue;
+
+      url = unwrapGoogleUrl(url);
+      if (!url || hasJunkyScheme(url)) continue;
+
+      if (isGoogleVerticalOrInternal(absUrl(raw))) continue;
+
+      const label =
+        (a.textContent || "").trim() ||
+        (a.getAttribute("aria-label") || "").trim();
+      if (!label || label.length < 6) continue;
+      if (!isVisibleEnough(a)) continue;
+
+      const finalUrl = absUrl(url) || url;
+      const score = scoreAnchor(a, finalUrl);
+      if (score < 3) continue;
+
+      candidates.push({
+        href: finalUrl,
+        text: label.slice(0, 200),
+        score,
+      });
+    }
+
+    candidates.sort((a, b) => b.score - a.score);
+
+    const seenUrl = new Set();
+    const seenDomain = new Map();
+    const topLinks = [];
+
+    for (const c of candidates) {
+      const key = normForDedup(c.href);
+      if (seenUrl.has(key)) continue;
+
+      const domain = getDomain(c.href);
+      const count = seenDomain.get(domain) || 0;
+      if (domain && count >= 2) continue;
+
+      seenUrl.add(key);
+      if (domain) seenDomain.set(domain, count + 1);
+
+      topLinks.push({ text: c.text, href: c.href });
+      if (topLinks.length >= 10) break;
+    }
+
+    // ✅ Convert [{text, href}, ...] → ["text — href", ...]
+    // (still List[str] as your schema wants)
+    const links = topLinks.map((l) => `${l.text} — ${l.href}`);
+
+    // ✅ Return EXACTLY what your FastAPI PageSummary expects
+    return {
+      url: href,
+      title,
+      links,
+    };
+  }
+
+  // ---------- main flow ----------
+  async function main() {
+    await waitForRealLinks();
+    const payload = extractSummary();
+
+    console.log("[sensor] page summary extracted:", payload);
+    console.table(
+      payload.links.map((s, i) => ({
+        rank: i + 1,
+        link: s,
+      })),
+    );
+    // 1) send to backend via background
+    const resp = await sendSummaryToBackground(payload);
+
+    // Background will return: { ok: true, decision: {...} } or { ok: false, error: "..." }
+    if (!resp) return;
+    if (!resp.ok) {
+      console.warn("[sensor] backend error:", resp.error);
+      return;
+    }
+
+    // 2) execute decision
+    console.log("[executor] decision:", resp.decision);
+    executeDecision(resp.decision);
+  }
+
+  // Start once after load
+  main();
 })();
