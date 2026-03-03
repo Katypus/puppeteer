@@ -408,7 +408,7 @@
 
     // 2) execute decision
     console.log("[executor] decision:", resp.decision);
-    executeDecision(resp.decision);
+    await executeDecision(resp.decision);
   }
 
   // IMPORTANT: do NOT auto-run on page load anymore.
