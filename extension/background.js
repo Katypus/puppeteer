@@ -165,10 +165,6 @@ const DEFAULT_PERSONA = {
   patience: 1,
 };
 
-browser.runtime.onMessage.addListener(async (msg) => {
-  if (msg?.type !== "PAGE_SUMMARY") return;
-});
-
 browser.action.onClicked.addListener(async (tab) => {
   if (!tab?.id) return;
 
