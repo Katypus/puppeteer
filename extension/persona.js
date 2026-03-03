@@ -31,16 +31,25 @@ document
   });
 
 // Sends message to background to get the APIfetch function, which includes the user_id in the headers for authentication
-async function apiFetch(url, options = {}) {
+async function apiFetch(path, options = {}) {
+  console.log(`[persona.js apiFetch] ${options.method || "GET"} ${path}`);
   const result = await browser.runtime.sendMessage({
     type: "API_FETCH",
-    url,
+    path,
     options,
   });
-  if (!result.ok)
+  console.log(`[persona.js apiFetch] resolved:`, result);
+  if (result === undefined) {
+    console.error(
+      "[persona.js apiFetch] got undefined — background did not respond properly",
+    );
+  }
+  if (!result.ok) {
     throw new Error(`API ${result.status}: ${JSON.stringify(result.body)}`);
-  return result.body;
+  }
+  return result;
 }
+
 function setStatus(text) {
   const el = document.getElementById("status");
   el.textContent = text || "";
@@ -116,12 +125,43 @@ function renderPersonas(personas) {
 async function loadTab(route) {
   clearError();
   setStatus(`Loading ${route}…`);
-  const data = await apiFetch(route, { method: "GET" });
-  renderPersonas(data);
-  setStatus(`${Array.isArray(data) ? data.length : 0} persona(s)`);
-}
+  console.log(`[loadTab] Fetching data for route: ${route}`);
+  try {
+    const result = await apiFetch(route, { method: "GET" }); // result = { ok, status, body }
+    console.log(`[loadTab] API fetch result:`, result);
+    if (!result) {
+      throw new Error("apiFetch returned undefined");
+    }
+    if (!result.ok) {
+      // show useful info
+      const msg =
+        typeof result.body === "string"
+          ? result.body
+          : JSON.stringify(result.body);
+      showError(`HTTP ${result.status}: ${msg}`);
+      setStatus("Error");
+      return;
+    }
 
+    const data = result.body; // ✅ unwrap
+
+    renderPersonas(data);
+    setStatus(`${Array.isArray(data) ? data.length : 0} persona(s)`);
+  } catch (e) {
+    console.error("[loadTab] failed:", e);
+    showError(String(e));
+    setStatus("Error");
+  }
+}
 function wireTabs() {
+  // 🔒 One-time guard
+  if (window.__tabsWired) {
+    console.log("[wireTabs] already wired, skipping");
+    return;
+  }
+  window.__tabsWired = true;
+
+  console.log("[wireTabs] wiring listeners");
   const tabs = document.querySelectorAll(".tab");
 
   tabs.forEach((btn) => {
@@ -148,3 +188,22 @@ function wireTabs() {
 }
 
 document.addEventListener("DOMContentLoaded", wireTabs);
+
+// Listen for RUN button from popup
+document.getElementById("runBtn").addEventListener("click", async () => {
+  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.id) return;
+
+  try {
+    const resp = await browser.tabs.sendMessage(tab.id, {
+      type: "RUN_DECISION_LOOP",
+    });
+    console.log("Run triggered:", resp);
+    window.close(); // optional: close the popup
+  } catch (e) {
+    console.error(
+      "Could not trigger content script. Is it injected on this page?",
+      e,
+    );
+  }
+});

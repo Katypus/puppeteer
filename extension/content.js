@@ -411,6 +411,29 @@
     executeDecision(resp.decision);
   }
 
-  // Start once after load
-  main();
+  // IMPORTANT: do NOT auto-run on page load anymore.
+  // main();
+
+  browser.runtime.onMessage.addListener((msg) => {
+    if (msg?.type !== "RUN_DECISION_LOOP") return;
+
+    // optional: prevent double-runs if you click twice quickly
+    if (window.__decisionLoopRunning) {
+      return Promise.resolve({ ok: false, error: "Already running" });
+    }
+
+    window.__decisionLoopRunning = true;
+
+    return (async () => {
+      try {
+        await main(); // <-- your existing async main() that extracts -> sends -> executes
+        return { ok: true };
+      } catch (e) {
+        console.error("[content] main() failed:", e);
+        return { ok: false, error: String(e) };
+      } finally {
+        window.__decisionLoopRunning = false;
+      }
+    })();
+  });
 })();
