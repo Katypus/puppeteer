@@ -2,10 +2,10 @@
 # Request Models
 # -----------------------
 from uuid import UUID
-from pydantic.v1 import BaseModel
-from pydantic import BaseModel, Field
 from typing import List, Literal
 from datetime import datetime
+from pydantic import BaseModel, Field, ConfigDict, ValidationError
+from typing import Literal, Optional, Union
 
 class PersonaPost(BaseModel):
     name: str
@@ -53,6 +53,7 @@ class PageSummary(BaseModel):
 
 class DecideRequest(BaseModel):
     persona: PersonaPost
+    history: List[str]
     page: PageSummary
 
 
@@ -61,6 +62,14 @@ class DecideRequest(BaseModel):
 # -----------------------
 
 class Decision(BaseModel):
-    action: Literal["click", "search", "idle"]
-    target: str | None = None
-    reason: str
+    model_config = ConfigDict(extra="forbid")
+
+    action: Literal[
+        "click","type","scroll","navigate","search","open_result","read","back","wait","noop"
+    ]
+    target: Optional[Union[str, dict]] = None
+    value: Optional[Union[str, int, float]] = None
+    reason: Optional[str] = None
+    rank: Optional[int] = None
+    seconds: Optional[int] = None
+    engine: Optional[Literal["google","duckduckgo"]] = None

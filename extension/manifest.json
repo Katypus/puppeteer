@@ -3,7 +3,16 @@
   "name": "Puppeteer",
   "version": "1.0",
   "description": "AI personas that browse to obfuscate behavior",
-  "permissions": ["tabs", "storage", "scripting", "activeTab", "<all_urls>"],
+  "permissions": [
+    "tabs",
+    "storage",
+    "scripting",
+    "activeTab",
+    "<all_urls>",
+    "https://www.google.com/*",
+    "https://www.bing.com/*",
+    "https://duckduckgo.com/*"
+  ],
   "background": {
     "scripts": ["background.js"]
   },
@@ -13,8 +22,14 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["content.js"]
+      "matches": [
+        "https://www.google.com/*",
+        "https://www.bing.com/*",
+        "https://duckduckgo.com/*",
+        "<all_urls>"
+      ],
+      "js": ["helpers.js", "executor.js", "sensor.js", "main.js"],
+      "run_at": "document_idle"
     }
   ]
 }

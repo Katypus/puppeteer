@@ -13,7 +13,7 @@ from schema import PersonaPost, PersonaGet, PageSummary, Decision, DecideRequest
 app = FastAPI()
 app.include_router(personas_router)
 OLLAMA_URL = "http://localhost:11434/api/generate"
-MODEL_NAME = "phi3"
+MODEL_NAME = "persona-agent"
 
 # allows CORS settings for our extension to call the API without issues
 app.add_middleware(
@@ -29,40 +29,30 @@ app.add_middleware(
 # Prompt Builder
 # -----------------------
 
-def build_prompt(persona: Persona, page: PageSummary) -> str:
+def build_prompt(persona: Persona, page: PageSummary, history: list) -> str:
     return f"""
-You are a web browsing persona.
+    Persona:
+    Name: {persona.name}
+    Age: {persona.age}
+    Interests: {persona.interests}
+    Political Index (left to right): {persona.politics}
+    
+    Page:
+    URL: {page.url}
+    Title: {page.title}
+    Links: {page.links[:5]}
 
-Persona:
-- Name, Age, Gender, Race: {persona.name}, {persona.age}, {persona.gender}, {persona.race}
-- Interests: {persona.interests}
-- Political Index (0 is left, 10 is right): {persona.politics}
-- Risk tolerance: {persona.risk}
+    (Recent actions: {history[-2:]})
+    """
 
-Current Page:
-- URL: {page.url}
-- Title: {page.title}
-- Links: {page.links}
-
-Choose ONE action and respond ONLY in JSON:
-
-{{
-  "action": "click" | "scroll" | "back",
-  "target": "string",
-  "reason": "string"
-}}
-
-Ensure the JSON is complete and properly closed.
-Return valid JSON only.
-"""
-
-
+# got rid of risk to simplify the prompt
 # -----------------------
 # Ollama Query
 # -----------------------
 
 async def query_llama(prompt: str) -> str:
-    timeout = httpx.Timeout(60.0, connect=5.0)
+    # adjust timeout here
+    timeout = httpx.Timeout(120.0, connect=5.0)
     async with httpx.AsyncClient(timeout=timeout) as client:
         response = await client.post(
             OLLAMA_URL,
@@ -72,8 +62,9 @@ async def query_llama(prompt: str) -> str:
                 "stream": False,
                 "format": "json",   # 👈 important
                 "options": {
-                    "temperature": 0.3,
-                    "num_predict": 75
+                    "temperature": 0.0,
+                    "num_predict": 50,
+                    "stop": ["\n\n", "\n```", "```"]
                 }
             }
         )
@@ -83,6 +74,15 @@ async def query_llama(prompt: str) -> str:
 
     return response.json()["response"]
 
+def validate_decision(d: Decision) -> Decision:
+    # conditional requirements
+    if d.action == "search" and not isinstance(d.value, str):
+        raise ValueError("search requires string 'value' query")
+    if d.action == "click" and d.target is None:
+        raise ValueError("click requires 'target'")
+    if d.action == "type" and (d.target is None or not isinstance(d.value, str)):
+        raise ValueError("type requires 'target' and string 'value'")
+    return d
 
 # -----------------------
 # POST /decide
@@ -91,13 +91,15 @@ async def query_llama(prompt: str) -> str:
 @app.post("/decide", response_model=Decision)
 async def decide(req: DecideRequest):
 
-    prompt = build_prompt(req.persona, req.page)
+    prompt = build_prompt(req.persona, req.page, req.history)
+    print(prompt)  # 🔥 Debug print
 
     raw_output = await query_llama(prompt)
 
     try:
         parsed = json.loads(raw_output)
-        decision = Decision(**parsed)
+        decision = Decision.model_validate(parsed)
+        validate_decision(decision)
     except Exception:
         raise HTTPException(
             status_code=500,

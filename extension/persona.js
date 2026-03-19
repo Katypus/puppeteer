@@ -190,19 +190,43 @@ function wireTabs() {
 document.addEventListener("DOMContentLoaded", wireTabs);
 
 // Listen for RUN button from popup
+// Sends request to background, which will forward RUN_DECISION_LOOP only to
+// the tab where the user clicked "run" and will track running state per tab.
 document.getElementById("runBtn").addEventListener("click", async () => {
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
   if (!tab?.id) return;
 
   try {
-    const resp = await browser.tabs.sendMessage(tab.id, {
+    const resp = await browser.runtime.sendMessage({
       type: "RUN_DECISION_LOOP",
+      tabId: tab.id,
     });
     console.log("Run triggered:", resp);
     window.close(); // optional: close the popup
   } catch (e) {
     console.error(
       "Could not trigger content script. Is it injected on this page?",
+      e,
+    );
+  }
+});
+
+// Listen for STOP button from popup
+// Sends request to background to disable the decision loop for this tab.
+document.getElementById("stopBtn").addEventListener("click", async () => {
+  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.id) return;
+
+  try {
+    const resp = await browser.runtime.sendMessage({
+      type: "STOP_DECISION_LOOP",
+      tabId: tab.id,
+    });
+    console.log("Stop triggered:", resp);
+    window.close(); // optional: close the popup
+  } catch (e) {
+    console.error(
+      "Could not send stop command. Is it injected on this page?",
       e,
     );
   }
