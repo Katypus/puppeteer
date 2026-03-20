@@ -19,7 +19,6 @@ document
         .getElementById("interests")
         .value.split(",")
         .map((s) => s.trim()),
-      interests: {},
     };
 
     await apiFetch("/personas", {
@@ -67,6 +66,23 @@ function clearError() {
   el.textContent = "";
 }
 
+async function getSelectedPersona() {
+  const result = await browser.storage.local.get("selectedPersona");
+  return result.selectedPersona || null;
+}
+
+async function setSelectedPersona(persona) {
+  await browser.storage.local.set({ selectedPersona: persona });
+}
+
+async function updateCurrentPersona() {
+  const selected = await getSelectedPersona();
+  const el = document.getElementById("current-persona");
+  el.textContent = selected
+    ? `Current: ${selected.name}`
+    : "Current: Default (Brad)";
+}
+
 function setActiveTab(activeButton) {
   document
     .querySelectorAll(".tab")
@@ -86,40 +102,59 @@ function renderPersonas(personas) {
     return;
   }
 
-  for (const p of personas) {
-    const card = document.createElement("div");
-    card.className = "card";
+  // Get selected persona to highlight
+  getSelectedPersona().then((selected) => {
+    for (const p of personas) {
+      const card = document.createElement("div");
+      card.className = "card";
 
-    const title = document.createElement("h3");
-    title.textContent = p.name ?? "(unnamed persona)";
-    card.appendChild(title);
+      if (selected && p.id === selected.id) {
+        card.classList.add("selected");
+      }
 
-    const desc = document.createElement("div");
-    desc.textContent = p.description ?? "";
-    card.appendChild(desc);
+      const title = document.createElement("h3");
+      title.textContent = p.name ?? "(unnamed persona)";
+      card.appendChild(title);
 
-    const meta = document.createElement("div");
-    meta.className = "meta";
+      const desc = document.createElement("div");
+      desc.textContent = p.description ?? "";
+      card.appendChild(desc);
 
-    // Adjust these field names to match your API response
-    const id = p.id ? `id=${p.id}` : "";
-    const owner = p.owner_id
-      ? `owner=${p.owner_id}`
-      : p.ownerId
-        ? `owner=${p.ownerId}`
-        : "";
-    const pub =
-      p.is_public !== undefined
-        ? `public=${p.is_public}`
-        : p.public !== undefined
-          ? `public=${p.public}`
+      const meta = document.createElement("div");
+      meta.className = "meta";
+
+      // Adjust these field names to match your API response
+      const id = p.id ? `id=${p.id}` : "";
+      const owner = p.owner_id
+        ? `owner=${p.owner_id}`
+        : p.ownerId
+          ? `owner=${p.ownerId}`
           : "";
+      const pub =
+        p.is_public !== undefined
+          ? `public=${p.is_public}`
+          : p.public !== undefined
+            ? `public=${p.public}`
+            : "";
 
-    meta.textContent = [id, owner, pub].filter(Boolean).join(" • ");
-    card.appendChild(meta);
+      meta.textContent = [id, owner, pub].filter(Boolean).join(" • ");
+      card.appendChild(meta);
 
-    list.appendChild(card);
-  }
+      const selectBtn = document.createElement("button");
+      selectBtn.textContent = "Select as Active";
+      selectBtn.addEventListener("click", async () => {
+        await setSelectedPersona(p);
+        alert(`Selected ${p.name} as active persona`);
+        // Reload the list to update highlighting
+        loadTab(document.querySelector(".tab.active").dataset.route);
+        // Update current display
+        updateCurrentPersona();
+      });
+      card.appendChild(selectBtn);
+
+      list.appendChild(card);
+    }
+  });
 }
 
 async function loadTab(route) {
@@ -185,6 +220,9 @@ function wireTabs() {
     setStatus("");
     showError(err);
   });
+
+  // Update current persona display
+  updateCurrentPersona();
 }
 
 document.addEventListener("DOMContentLoaded", wireTabs);

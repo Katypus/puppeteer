@@ -13,7 +13,7 @@ from schema import PersonaPost, PersonaGet, PageSummary, Decision, DecideRequest
 app = FastAPI()
 app.include_router(personas_router)
 OLLAMA_URL = "http://localhost:11434/api/generate"
-MODEL_NAME = "persona-agent"
+MODEL_NAME = "persona"
 
 # allows CORS settings for our extension to call the API without issues
 app.add_middleware(

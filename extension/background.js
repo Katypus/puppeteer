@@ -1,17 +1,4 @@
 const DECIDE_URL = "http://127.0.0.1:8000/decide";
-const CHOSEN_PERSONA = {
-  name: "Brad",
-  interests: ["Truth Social", "Donald Trump", "Iran", "Conspiracy Theories"],
-  description: "",
-  is_public: false,
-  age: 30,
-  gender: "male",
-  race: "white",
-  politics: 9,
-  risk: 8,
-  attention: 1,
-  patience: 1,
-};
 // background.js
 /*
 listen for tab changes
@@ -189,8 +176,25 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
         links: msg.payload.links,
       };
 
+      // Load selected persona or default to Brad
+      const { selectedPersona } =
+        await browser.storage.local.get("selectedPersona");
+      const persona = selectedPersona || {
+        name: "Brad",
+        interests: ["Truth Social", "Donald Trump", "Conspiracy Theories"],
+        description: "",
+        is_public: false,
+        age: 30,
+        gender: "male",
+        race: "white",
+        politics: 9,
+        risk: 8,
+        attention: 1,
+        patience: 1,
+      };
+
       const decideRequest = {
-        persona: CHOSEN_PERSONA,
+        persona,
         page,
         history: msg.payload.history.map(
           (h) => `${h.action}: ${h.value ?? h.target ?? ""}`,
@@ -260,30 +264,6 @@ async function handleApiFetch(msg) {
   } catch (e) {
     console.error("[background] API_FETCH failed:", e);
     return { ok: false, status: 0, body: String(e) };
-  }
-}
-async function handlePageSummary(msg) {
-  const decideRequest = {
-    persona: CHOSEN_PERSONA,
-    page: msg.payload,
-  };
-
-  try {
-    const res = await fetch(DECIDE_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(decideRequest),
-    });
-
-    if (!res.ok) {
-      const text = await res.text();
-      return { ok: false, error: `HTTP ${res.status}: ${text}` };
-    }
-
-    const decision = await res.json();
-    return { ok: true, decision };
-  } catch (e) {
-    return { ok: false, error: String(e) };
   }
 }
 

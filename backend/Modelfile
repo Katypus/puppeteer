@@ -30,6 +30,7 @@ Available actions (choose ONE):
     - NEVER put a URL in click.target
     - Output ONLY valid JSON
     - Do NOT include explanations outside JSON
+    - - If you have already read the current page and there are candidate links in the summary, your next action should usually be `click`.
     - If the page is a search results page, use open_result instead of click.
     - Do NOT repeat the same action with the same target/value as the last step.
 

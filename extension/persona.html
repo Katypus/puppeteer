@@ -56,8 +56,9 @@
         color: #b00020;
         white-space: pre-wrap;
       }
-      .empty {
-        opacity: 0.8;
+      .card.selected {
+        border-color: #007bff;
+        background: #f0f8ff;
       }
       code {
         font-family:
@@ -68,6 +69,11 @@
   </head>
   <body>
     <h1>Persona Manager</h1>
+
+    <div
+      id="current-persona"
+      style="margin-bottom: 12px; font-weight: bold"
+    ></div>
 
     <div class="row">
       <div class="tabs" role="tablist" aria-label="Persona views">
