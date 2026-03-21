@@ -14,6 +14,12 @@ function isNonEmptyString(x) {
   return typeof x === "string" && x.trim().length > 0;
 }
 
+function isProbablyCssSelector(str) {
+  if (!isNonEmptyString(str)) return false;
+  // approximate common selectors: starts with ., #, [, *, >, +, ~, : and contains non-space tokens
+  return /^[.#\[>+~:*]/.test(str) || /\s/.test(str);
+}
+
 function looksLikeUrl(x) {
   return isNonEmptyString(x) && /^https?:\/\//i.test(x.trim());
 }
@@ -99,13 +105,34 @@ function extractAndParseJson(raw) {
 // - object locator: { css, text, href, role, name } (we'll resolve a few common forms)
 function resolveTarget(target) {
   if (isNonEmptyString(target)) {
-    // legacy path: your existing resolver
-    return findElement(target);
+    const raw = target.trim();
+
+    // If target looks like a URL, prefer matching anchor href
+    if (looksLikeUrl(raw)) {
+      const href = safeUrl(raw);
+      if (href) {
+        const anchor = document.querySelector(`a[href="${CSS.escape(href)}"]`);
+        if (anchor && isElementClickable(anchor)) return anchor;
+      }
+    }
+
+    // String may be CSS selector, exact link text, or contains link text.
+    if (isProbablyCssSelector(raw)) {
+      try {
+        const sel = document.querySelector(raw);
+        if (sel && isElementClickable(sel)) return sel;
+      } catch {
+        // invalid selector
+      }
+    }
+
+    // Fallback to text-based resolution via legacy findElement behavior.
+    const found = findElement({ text: raw });
+    if (found) return found;
+
+    return findElement(raw);
   }
 
-  if (!target || typeof target !== "object") return null;
-
-  // CSS locator
   if (isNonEmptyString(target.css)) {
     try {
       const el = document.querySelector(target.css.trim());
@@ -231,6 +258,32 @@ function pickBestVisible(elements) {
 /* ----------------------------- legacy findElement ---------------------------- */
 
 function findElement(target = {}) {
+  if (isNonEmptyString(target)) {
+    const raw = target.trim();
+
+    // If looks like CSS selector, try it first
+    if (isProbablyCssSelector(raw)) {
+      try {
+        const el = document.querySelector(raw);
+        if (el) return el;
+      } catch {
+        // invalid selector
+      }
+    }
+
+    // URL target -> matching anchor by href
+    if (looksLikeUrl(raw)) {
+      const href = safeUrl(raw);
+      if (href) {
+        const a = document.querySelector(`a[href="${CSS.escape(href)}"]`);
+        if (a) return a;
+      }
+    }
+
+    // Treat as text content for link/button locators
+    target = { text: raw };
+  }
+
   const { selector, text, hrefIncludes } = target;
 
   if (selector) {
@@ -369,6 +422,52 @@ async function executeSearch(query, opts = {}) {
   window.location.href = url;
 }
 
+function hasDecisionRichZones() {
+  const decisionTexts = [
+    "related articles",
+    "next",
+    "see also",
+    "recommended",
+    "more stories",
+    "trending",
+    "navigation",
+    "menu",
+    "links",
+    "explore",
+  ];
+
+  const decisionSelectors = [
+    "nav",
+    "aside",
+    ".sidebar",
+    ".related",
+    ".recommendations",
+    ".nav",
+    ".menu",
+    "[role='navigation']",
+  ];
+
+  // Check text in links/buttons
+  const elements = document.querySelectorAll(
+    "a, button, [role='button'], h2, h3, .heading",
+  );
+  for (const el of elements) {
+    const text = (el.innerText || el.textContent || "").toLowerCase().trim();
+    if (decisionTexts.some((t) => text.includes(t))) {
+      return true;
+    }
+  }
+
+  // Check selectors
+  for (const sel of decisionSelectors) {
+    if (document.querySelector(sel)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 async function executeRead(params = {}) {
   // params: { seconds?: number, mode?: "scan"|"deep" }
   const seconds = Number(params.seconds);
@@ -382,18 +481,16 @@ async function executeRead(params = {}) {
 
   const start = Date.now();
 
-  // simple human-ish pattern: pause, small scrolls, pause, occasional tiny scroll up
   await sleep(jitter(400, 900));
 
   while (Date.now() - start < totalMs) {
-    const down = mode === "deep" ? jitter(200, 520) : jitter(300, 750);
-    window.scrollBy({ top: down, behavior: "smooth" });
-    await sleep(jitter(800, 1500));
+    window.scrollBy({ top: window.innerHeight, behavior: "smooth" });
+    await sleep(jitter(1000, 2000));
 
-    if (mode === "deep" && Math.random() < 0.25) {
-      const up = jitter(80, 220);
-      window.scrollBy({ top: -up, behavior: "smooth" });
-      await sleep(jitter(500, 900));
+    if (hasDecisionRichZones()) {
+      break;
+    } else {
+      await sleep(jitter(800, 1500));
     }
   }
 }
@@ -465,6 +562,69 @@ async function executeOpenResult(params = {}) {
     return;
   }
 
+  if (params.links && Array.isArray(params.links)) {
+    let hrefs = params.links
+      .map((link) => {
+        const parts = link.split(" — ");
+        return parts.length > 1 ? parts[parts.length - 1] : link;
+      })
+      .filter((href) => href && safeUrl(href));
+
+    if (mustInclude.length) {
+      hrefs = hrefs.filter((href) => {
+        const txt = href.toLowerCase();
+        return mustInclude.every((w) => txt.includes(w));
+      });
+    }
+
+    if (!hrefs.length) {
+      console.log("[executor] links.length:" + hrefs.length);
+      console.warn("[executor] open_result: no suitable links found");
+      return;
+    }
+
+    const idx = Number.isFinite(rank)
+      ? Math.max(0, Math.min(hrefs.length - 1, rank - 1))
+      : 0;
+    const chosenHref = hrefs[idx];
+
+    console.log("[executor] open_result: chosen", { rank, chosenHref });
+
+    if (openInNewTab) {
+      // Try background OPEN_TAB
+      try {
+        if (typeof browser !== "undefined" && browser?.runtime?.sendMessage) {
+          await browser.runtime.sendMessage({
+            type: "OPEN_TAB",
+            url: chosenHref,
+            active: true,
+          });
+          console.log("[executor] open_result: opened via background OPEN_TAB");
+          return;
+        }
+      } catch (e) {
+        console.warn("[executor] open_result: background OPEN_TAB failed", e);
+      }
+
+      // window.open
+      const w = window.open(chosenHref, "_blank", "noopener,noreferrer");
+      if (w) {
+        console.log("[executor] open_result: opened via window.open");
+        return;
+      }
+
+      // Last resort: same tab
+      console.warn(
+        "[executor] open_result: window.open blocked; navigating same tab",
+      );
+      window.location.assign(chosenHref);
+    } else {
+      console.log("[executor] open_result: navigating via location.assign");
+      window.location.assign(chosenHref);
+    }
+    return;
+  }
+
   let links = getSerpResultLinks();
 
   if (mustInclude.length) {
@@ -493,6 +653,7 @@ async function executeOpenResult(params = {}) {
   links = deduped;
 
   if (!links.length) {
+    console.log("[executor] links.length:" + links.length);
     console.warn("[executor] open_result: no suitable links found");
     return;
   }
@@ -778,7 +939,7 @@ function validateDecision(d) {
 
 /* ----------------------------- core executor ------------------------------ */
 
-async function executeDecision(rawDecision) {
+async function executeDecision(rawDecision, links) {
   console.log("[executor] raw decision:", rawDecision);
   const d = normalizeDecision(rawDecision);
   if (!d) return;
@@ -809,6 +970,7 @@ async function executeDecision(rawDecision) {
         rank: d.rank != null ? Number(d.rank) : 1,
         openInNewTab: !!d.openInNewTab,
         mustInclude: d.mustInclude,
+        links: links,
       });
       return;
     }

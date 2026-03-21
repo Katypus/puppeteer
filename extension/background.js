@@ -71,6 +71,21 @@ browser.tabs.onRemoved.addListener((tabId) => {
   tabDecisionState.delete(tabId);
 });
 
+// Send RUN_DECISION_LOOP to content.js on every navigation if the tab is enabled
+browser.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+  if (changeInfo.status === 'complete') {
+    const state = getTabState(tabId);
+    if (state.enabled) {
+      try {
+        await browser.tabs.sendMessage(tabId, { type: "RUN_DECISION_LOOP" });
+        console.log("[background] sent RUN_DECISION_LOOP on navigation for tab", tabId);
+      } catch (e) {
+        console.error("[background] failed to send RUN_DECISION_LOOP on navigation:", e);
+      }
+    }
+  }
+});
+
 async function apiFetch(url, options = {}) {
   try {
     const { user_id } = await browser.storage.local.get("user_id");

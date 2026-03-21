@@ -74,6 +74,7 @@ async def query_llama(prompt: str) -> str:
 
     return response.json()["response"]
 
+#TODO: update this method
 def validate_decision(d: Decision) -> Decision:
     # conditional requirements
     if d.action == "search" and not isinstance(d.value, str):
@@ -90,6 +91,7 @@ def validate_decision(d: Decision) -> Decision:
 
 @app.post("/decide", response_model=Decision)
 async def decide(req: DecideRequest):
+    req.page.links = [f"{i+1}. {link}" for i, link in enumerate(req.page.links)]
 
     prompt = build_prompt(req.persona, req.page, req.history)
     print(prompt)  # 🔥 Debug print
@@ -100,12 +102,13 @@ async def decide(req: DecideRequest):
         parsed = json.loads(raw_output)
         decision = Decision.model_validate(parsed)
         validate_decision(decision)
-    except Exception:
+    except Exception as e:
         raise HTTPException(
             status_code=500,
             detail={
                 "error": "Invalid JSON from LLM",
-                "raw_output": raw_output
+                "raw_output": raw_output,
+                "exception": str(e)
             }
         )
 

@@ -47,7 +47,10 @@ async function main() {
     // 2) execute decision
     console.log("[executor] decision:", resp.decision);
     await window.PuppeteerSensor.rememberInBackground(resp.decision);
-    await window.PuppeteerExecutor.executeDecision(resp.decision);
+    await window.PuppeteerExecutor.executeDecision(
+      resp.decision,
+      payload.links,
+    );
   } catch (e) {
     console.error("[agent] main failed:", e);
   } finally {

@@ -86,7 +86,10 @@ function extractSummary() {
 
   // ✅ Convert [{text, href}, ...] → ["text — href", ...]
   // (still List[str] as your schema wants)
-  const links = topLinks.map((l) => `${l.text} — ${l.href}`);
+  const links = topLinks.map((l) => {
+    const shortText = l.text.replace(/\s+/g, " ").trim().slice(0, 40);
+    return `${shortText} — ${l.href}`;
+  });
 
   // ✅ Return EXACTLY what your FastAPI PageSummary expects
   return {
