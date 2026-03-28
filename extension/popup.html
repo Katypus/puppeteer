@@ -1,0 +1,129 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Puppeteer</title>
+    <style>
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          sans-serif;
+        margin: 16px;
+        width: 300px;
+      }
+      .row {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .status {
+        font-size: 12px;
+        opacity: 0.8;
+      }
+      .error {
+        color: #b00020;
+        white-space: pre-wrap;
+      }
+      .banner {
+        text-align: center;
+        margin-bottom: 16px;
+      }
+      .banner img {
+        max-width: 100%;
+        height: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="banner">
+      <img src="sprite/puppeteerlogo.png" alt="Puppeteer" />
+    </div>
+
+    <div
+      id="current-persona"
+      style="margin-bottom: 12px; font-weight: bold"
+    ></div>
+
+    <h2 style="margin: 0 0 8px 0">Sprite Preview</h2>
+    <div
+      id="sprite-window"
+      style="
+        width: 256px;
+        height: 256px;
+        position: relative;
+        border: 1px solid #999;
+        background: #ddd;
+        overflow: hidden;
+        margin-bottom: 12px;
+      "
+    >
+      <img
+        id="sprite-politics"
+        style="
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 256px;
+          height: 256px;
+        "
+      />
+      <img
+        id="sprite-race"
+        style="
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 256px;
+          height: 256px;
+        "
+      />
+      <img
+        id="sprite-risk"
+        style="
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 256px;
+          height: 256px;
+        "
+      />
+      <img
+        id="sprite-age"
+        style="
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 256px;
+          height: 256px;
+        "
+      />
+      <img
+        id="sprite-gender"
+        style="
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 256px;
+          height: 256px;
+        "
+      />
+    </div>
+
+    <div class="row" style="gap: 8px; margin-bottom: 12px">
+      <button id="runBtn">Run on this tab</button>
+      <button id="stopBtn">Stop on this tab</button>
+    </div>
+
+    <div class="row">
+      <button id="manageBtn">Manage Personas</button>
+    </div>
+
+    <div id="error" class="error" style="display: none"></div>
+
+    <script src="popup.js"></script>
+  </body>
+</html></content>
+<parameter name="filePath">c:\Users\sapph\Downloads\puppeteer\extension\popup.html

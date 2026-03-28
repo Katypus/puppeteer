@@ -1,0 +1,334 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Personas</title>
+    <style>
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          sans-serif;
+        margin: 16px;
+      }
+      .nav-bar {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+        border-bottom: 2px solid #ccc;
+        padding-bottom: 8px;
+      }
+      .nav-btn {
+        padding: 8px 16px;
+        border: none;
+        background: #fff;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      .nav-btn.active {
+        border-bottom: 3px solid #007bff;
+        font-weight: 600;
+        margin-bottom: -11px;
+      }
+      .page {
+        display: none;
+      }
+      .page.active {
+        display: block;
+      }
+      .row {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .status {
+        font-size: 12px;
+        opacity: 0.8;
+      }
+      .card {
+        border: 1px solid #e3e3e3;
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 10px;
+      }
+      .card h3 {
+        margin: 0 0 6px 0;
+        font-size: 16px;
+      }
+      .meta {
+        font-size: 12px;
+        opacity: 0.8;
+      }
+      .error {
+        color: #b00020;
+        white-space: pre-wrap;
+      }
+      .card.selected {
+        border-color: #007bff;
+        background: #f0f8ff;
+      }
+      code {
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", monospace;
+      }
+      .banner {
+        text-align: center;
+        margin-bottom: 16px;
+      }
+      .banner img {
+        max-width: 100%;
+        height: auto;
+      }
+      .persona-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 16px;
+        margin-top: 12px;
+      }
+      .persona-card {
+        border: 1px solid #e3e3e3;
+        border-radius: 12px;
+        padding: 12px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .persona-card:hover {
+        border-color: #007bff;
+        box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
+      }
+      .persona-card.selected {
+        border-color: #007bff;
+        background: #f0f8ff;
+        border-width: 2px;
+      }
+      .sprite-container {
+        width: 200px;
+        height: 200px;
+        position: relative;
+        border: 1px solid #999;
+        background: #ddd;
+        overflow: hidden;
+        margin-bottom: 12px;
+      }
+      .sprite-container img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+      .persona-card h3 {
+        margin: 0 0 4px 0;
+        font-size: 14px;
+        word-break: break-word;
+      }
+      .persona-card p {
+        margin: 0 0 8px 0;
+        font-size: 12px;
+        opacity: 0.7;
+      }
+      .select-btn {
+        padding: 6px 12px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+      }
+      .select-btn:hover {
+        background: #0056b3;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="banner">
+      <img src="sprite/puppeteerlogo.png" alt="Puppeteer" />
+    </div>
+    <h1>Puppets!</h1>
+
+    <div class="nav-bar">
+      <button class="nav-btn active" data-page="public">Public</button>
+      <button class="nav-btn" data-page="mine">Mine</button>
+      <button class="nav-btn" data-page="create">Create Puppet</button>
+    </div>
+
+    <div id="error" class="error" style="display: none"></div>
+
+    <!-- Create Persona Page -->
+    <div id="page-create" class="page active">
+      <div
+        id="persona-form-preview"
+        style="display: flex; gap: 16px; align-items: flex-start"
+      >
+        <form id="persona-form" style="flex: 1; min-width: 360px">
+          <label>Name</label>
+          <br />
+          <input type="text" id="name" required />
+          <br />
+          <label>Description</label>
+          <br />
+          <textarea id="description"></textarea>
+          <br />
+
+          <!-- BROWSING BEHAVIORS -->
+          <label>Risk</label>
+          <br />
+          <div class="slider">
+            <input type="range" id="risk" min="0" max="10" step="1" />
+          </div>
+          <br />
+          <label>Attention</label>
+          <br />
+          <div class="slider">
+            <input type="range" id="attention" min="0" max="10" step="1" />
+          </div>
+          <br />
+          <label>Patience</label>
+          <br />
+          <div class="slider">
+            <input type="range" id="patience" min="0" max="10" step="1" />
+          </div>
+          <br />
+          <label>Interests (comma-separated)</label>
+          <br />
+          <textarea id="interests"></textarea>
+          <br />
+          <!-- DEMOGRAPHIC INFO -->
+          <label>Race</label>
+          <br />
+          <select id="race">
+            <option value="white">White</option>
+            <option value="black">Black</option>
+            <option value="asian">Asian</option>
+            <option value="hispanic">Hispanic</option>
+            <option value="middle-eastern">Middle Eastern</option>
+            <option value="native-american">Native American</option>
+            <option value="mixed">Mixed</option>
+            <option value="other">Other</option>
+          </select>
+          <br />
+          <label>Politics</label>
+          <div class="slider">
+            <input type="range" id="politics" min="0" max="10" step="1" />
+          </div>
+          <label>Age</label>
+          <br />
+          <input type="number" id="age" min="0" max="3000" />
+          <br />
+          <label>Gender</label>
+          <br />
+          <select id="gender">
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="non-binary">Non-Binary</option>
+            <option value="other">Other</option>
+          </select>
+          <br />
+
+          <label>Public?</label>
+          <input type="checkbox" id="is_public" />
+          <br />
+          <button type="submit">Create Persona</button>
+        </form>
+
+        <div
+          id="sprite-preview-column"
+          style="
+            width: 256px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+          "
+        >
+          <h2 style="margin: 0 0 8px 0">Sprite Preview</h2>
+          <div
+            id="sprite-window"
+            style="
+              width: 256px;
+              height: 256px;
+              position: relative;
+              border: 1px solid #999;
+              background: #ddd;
+              overflow: hidden;
+            "
+          >
+            <img
+              id="sprite-politics"
+              style="
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 256px;
+                height: 256px;
+              "
+            />
+            <img
+              id="sprite-race"
+              style="
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 256px;
+                height: 256px;
+              "
+            />
+            <img
+              id="sprite-risk"
+              style="
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 256px;
+                height: 256px;
+              "
+            />
+            <img
+              id="sprite-age"
+              style="
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 256px;
+                height: 256px;
+              "
+            />
+            <img
+              id="sprite-gender"
+              style="
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 256px;
+                height: 256px;
+              "
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Public Page -->
+    <div id="page-public" class="page">
+      <h2>Public Personas</h2>
+      <div class="status" id="status-public"></div>
+      <div id="persona-list-public" class="persona-grid"></div>
+    </div>
+
+    <!-- Mine Page -->
+    <div id="page-mine" class="page">
+      <h2>My Personas</h2>
+      <div class="status" id="status-mine"></div>
+      <div id="persona-list-mine" class="persona-grid"></div>
+    </div>
+
+    <script src="manage_personas.js"></script>
+  </body>
+</html>

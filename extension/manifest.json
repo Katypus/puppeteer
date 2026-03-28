@@ -18,7 +18,7 @@
   },
   "browser_action": {
     "default_title": "Puppeteer",
-    "default_popup": "persona.html"
+    "default_popup": "popup.html"
   },
   "content_scripts": [
     {
