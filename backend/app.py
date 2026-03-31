@@ -3,12 +3,12 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from typing import List, Literal
-from models import Persona
+from backend.models import Persona
 import httpx
 import json
 from fastapi.middleware.cors import CORSMiddleware
-from personas import router as personas_router
-from schema import PersonaPost, PersonaGet, PageSummary, Decision, DecideRequest
+from backend.personas import router as personas_router
+from backend.schema import PersonaPost, PersonaGet, PageSummary, Decision, DecideRequest
 
 app = FastAPI()
 app.include_router(personas_router)

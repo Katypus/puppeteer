@@ -2,11 +2,11 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import List
 from uuid import UUID
-from models import User
-from database import SessionLocal, get_database
-import persona_crud
-from auth import get_current_user
-from schema import PersonaPost, PersonaGet
+from backend.models import User
+from backend.database import SessionLocal, get_database
+import backend.persona_crud
+from backend.auth import get_current_user
+from backend.schema import PersonaPost, PersonaGet
 
 router = APIRouter(prefix="/personas")
 

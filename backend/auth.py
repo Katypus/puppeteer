@@ -3,8 +3,8 @@ from fastapi import Header, HTTPException, Depends
 from sqlalchemy.orm import Session
 from uuid import UUID
 
-from database import SessionLocal
-from user_crud import get_or_create_user
+from backend.database import SessionLocal
+from backend.user_crud import get_or_create_user
 
 def get_db():
     db = SessionLocal()

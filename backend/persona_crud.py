@@ -2,8 +2,8 @@
 from requests import Session
 from sqlalchemy import or_
 
-from database import SessionLocal
-from models import Persona
+from backend.database import SessionLocal
+from backend.models import Persona
 
 def create_persona(database: Session, user_id, persona_data: dict):
     persona = Persona(
