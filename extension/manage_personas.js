@@ -230,11 +230,11 @@ function setActivePage(pageName) {
 }
 
 function createSpriteWindowHTML(persona, uniqueId) {
-  const politicsId = politicsSpriteIndex(persona.politics);
-  const riskId = riskSpriteIndex(persona.risk);
-  const ageId = ageSpriteIndex(persona.age);
-  const raceFile = raceSpriteFile(persona.race);
-  const genderFile = genderSpriteFile(persona.gender);
+  const politicsId = politicsSpriteIndex(persona.politics ?? 5);
+  const riskId = riskSpriteIndex(persona.risk ?? 5);
+  const ageId = ageSpriteIndex(persona.age ?? 30);
+  const raceFile = raceSpriteFile(persona.race ?? "white");
+  const genderFile = genderSpriteFile(persona.gender ?? "male");
 
   return `
     <div class="sprite-layer">

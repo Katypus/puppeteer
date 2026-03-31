@@ -39,7 +39,7 @@ class PersonaGet(BaseModel):
     gender: str = "unspecified"
     race: str = "unspecified"
     ## POLITICAL INDEX (0 is left, 10 is right)
-    political_index: float = Field(default=5, ge=0, le=10)
+    politics: float = Field(default=5, ge=0, le=10)
     
     # BROWSING BEHAVIOR TRAITS (1-10 scale)
     risk: float = Field(default=5, ge=0, le=10)
