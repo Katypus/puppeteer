@@ -3,13 +3,12 @@
   <head>
     <title>Personas</title>
     <style>
+      @font-face {
+        font-family: "PixelifySans";
+        src: url("PixelifySans-VariableFont_wght.ttf") format("truetype");
+      }
       body {
-        font-family:
-          system-ui,
-          -apple-system,
-          Segoe UI,
-          Roboto,
-          sans-serif;
+        font-family: "PixelifySans", sans-serif;
         margin: 16px;
       }
       .nav-bar {
@@ -75,11 +74,13 @@
           "Liberation Mono", monospace;
       }
       .banner {
-        text-align: center;
+        display: flex;
+        align-items: center;
+        gap: 10px;
         margin-bottom: 16px;
       }
       .banner img {
-        max-width: 100%;
+        width: 70%;
         height: auto;
       }
       .persona-grid {
@@ -151,8 +152,8 @@
   <body>
     <div class="banner">
       <img src="sprite/puppeteerlogo.png" alt="Puppeteer" />
+      <h1>Puppets!</h1>
     </div>
-    <h1>Puppets!</h1>
 
     <div class="nav-bar">
       <button class="nav-btn active" data-page="public">Public</button>
