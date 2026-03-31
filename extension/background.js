@@ -1,4 +1,4 @@
-const DECIDE_URL = "http://127.0.0.1:8000/decide";
+const DECIDE_URL = "https://puppeteer-devw.onrender.com/decide";
 // background.js
 /*
 listen for tab changes
