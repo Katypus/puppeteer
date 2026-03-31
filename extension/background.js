@@ -99,7 +99,7 @@ async function apiFetch(url, options = {}) {
 
     console.log(`[background apiFetch] url: ${url} (user_id: ${uid})`);
 
-    const resp = await fetch(`https://puppeteer-devw.onrender.com/${url}`, {
+    const resp = await fetch(`https://puppeteer-devw.onrender.com${url}`, {
       ...options,
       headers: {
         ...(options.headers || {}),
