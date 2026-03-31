@@ -11,7 +11,8 @@
     "<all_urls>",
     "https://www.google.com/*",
     "https://www.bing.com/*",
-    "https://duckduckgo.com/*"
+    "https://duckduckgo.com/*",
+    "https://puppeteer-devw.onrender.com/*"
   ],
   "background": {
     "scripts": ["background.js"]

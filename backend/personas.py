@@ -4,7 +4,7 @@ from typing import List
 from uuid import UUID
 from backend.models import User
 from backend.database import SessionLocal, get_database
-import backend.persona_crud
+import backend.persona_crud as persona_crud
 from backend.auth import get_current_user
 from backend.schema import PersonaPost, PersonaGet
 
