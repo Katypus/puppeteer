@@ -1,4 +1,4 @@
-const DECIDE_URL = "https://puppeteer-devw.onrender.com/decide";
+const DECIDE_URL = "http://localhost:8000/decide";
 // background.js
 /*
 listen for tab changes
@@ -99,7 +99,7 @@ async function apiFetch(url, options = {}) {
 
     console.log(`[background apiFetch] url: ${url} (user_id: ${uid})`);
 
-    const resp = await fetch(`https://puppeteer-devw.onrender.com${url}`, {
+    const resp = await fetch(`http://localhost:8000${url}`, {
       ...options,
       headers: {
         ...(options.headers || {}),
