@@ -9,37 +9,64 @@
       }
       body {
         font-family: "PixelifySans", sans-serif;
-        margin: 16px;
+        margin: 0;
+        padding: 0;
+        background: #bca371;
+        color: #1b264f;
       }
       .nav-bar {
         display: flex;
         gap: 8px;
-        margin-bottom: 16px;
-        border-bottom: 2px solid #ccc;
-        padding-bottom: 8px;
+        margin: 0;
+        background: #ad7d7d;
+        padding: 12px 16px;
+        color: #1b264f;
+        position: sticky;
+        top: 0;
+        z-index: 100;
       }
       .nav-btn {
         padding: 8px 16px;
         border: none;
-        background: #fff;
+        background: #ad7d7d;
+        color: inherit;
         cursor: pointer;
-        font-size: 14px;
+        font-size: 21px;
         font-family: "PixelifySans", sans-serif;
       }
       .nav-btn.active {
-        border-bottom: 3px solid #007bff;
+        border-bottom: 3px solid #a63a50;
         font-weight: 600;
         margin-bottom: -11px;
         font-family: "PixelifySans", sans-serif;
       }
-      h1 {
+      h1,
+      h2 {
         font-family: "PixelifySans", sans-serif;
+        text-align: center;
+      }
+      h2 {
+        font-size: 2rem;
+        margin-top: 0.5rem;
+        margin-bottom: 1rem;
       }
       .page {
         display: none;
       }
       .page.active {
         display: block;
+      }
+      #page-create.active {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      #persona-form-preview {
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+        justify-content: center;
       }
       .row {
         display: flex;
@@ -50,9 +77,10 @@
       .status {
         font-size: 12px;
         opacity: 0.8;
+        text-align: center;
       }
       .card {
-        border: 1px solid #e3e3e3;
+        border: 1px solid #ad7d7d;
         border-radius: 12px;
         padding: 12px;
         margin-bottom: 10px;
@@ -70,7 +98,7 @@
         white-space: pre-wrap;
       }
       .card.selected {
-        border-color: #007bff;
+        border-color: #a63a50;
         background: #f0f8ff;
       }
       code {
@@ -93,9 +121,11 @@
         grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
         gap: 16px;
         margin-top: 12px;
+        text-align: center;
       }
       .persona-card {
-        border: 1px solid #e3e3e3;
+        border: 1px solid #ad7d7d;
+        background: #ad7d7d;
         border-radius: 12px;
         padding: 12px;
         text-align: center;
@@ -106,12 +136,12 @@
         transition: all 0.2s;
       }
       .persona-card:hover {
-        border-color: #007bff;
+        border-color: #a63a50;
         box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
       }
       .persona-card.selected {
-        border-color: #007bff;
-        background: #f0f8ff;
+        border-color: #a63a50;
+        background: rgb(150, 97, 97);
         border-width: 2px;
       }
       .sprite-container {
@@ -142,7 +172,7 @@
       }
       .select-btn {
         padding: 6px 12px;
-        background: #007bff;
+        background: #a63a50;
         color: white;
         border: none;
         border-radius: 4px;
@@ -150,30 +180,57 @@
         font-size: 12px;
       }
       .select-btn:hover {
-        background: #0056b3;
+        background: #5e1120;
+      }
+      .curtain-left,
+      .curtain-right {
+        position: fixed;
+        top: 125px;
+        height: calc(100vh - 125px);
+        width: auto;
+        max-width: 20%;
+        z-index: 10;
+        pointer-events: none;
+      }
+      .curtain-left {
+        left: 0;
+      }
+      .curtain-right {
+        right: 0;
+      }
+      .curtain-left img,
+      .curtain-right img {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .empty {
+        text-align: center;
+        padding: 40px 20px;
+        opacity: 0.7;
       }
     </style>
   </head>
   <body>
-    <div class="banner">
-      <img src="sprite/puppeteerlogo.png" alt="Puppeteer" />
-      <h1>Puppets!</h1>
+    <div class="nav-bar">
+      <img src="sprite/puppeteerlogo.png" alt="Puppeteer" width="250" />
+      <button class="nav-btn active" data-page="public">PUBLIC PUPPETS</button>
+      <button class="nav-btn" data-page="mine">MY PUPPETS</button>
+      <button class="nav-btn" data-page="create">CREATE A PUPPET</button>
     </div>
 
-    <div class="nav-bar">
-      <button class="nav-btn active" data-page="public">Public</button>
-      <button class="nav-btn" data-page="mine">Mine</button>
-      <button class="nav-btn" data-page="create">Create Puppet</button>
+    <div class="curtain-left">
+      <img src="sprite/curtainsL.png" alt="Left Curtain" />
+    </div>
+    <div class="curtain-right">
+      <img src="sprite/curtainsR.png" alt="Right Curtain" />
     </div>
 
     <div id="error" class="error" style="display: none"></div>
 
     <!-- Create Persona Page -->
-    <div id="page-create" class="page active">
-      <div
-        id="persona-form-preview"
-        style="display: flex; gap: 16px; align-items: flex-start"
-      >
+    <div id="page-create" class="page" style="padding: 16px">
+      <div id="persona-form-preview">
         <form id="persona-form" style="flex: 1; min-width: 360px">
           <label>Name</label>
           <br />
@@ -322,15 +379,15 @@
     </div>
 
     <!-- Public Page -->
-    <div id="page-public" class="page">
-      <h2>Public Personas</h2>
+    <div id="page-public" class="page active" style="padding: 16px">
+      <h2>PUBLIC PUPPETS</h2>
       <div class="status" id="status-public"></div>
       <div id="persona-list-public" class="persona-grid"></div>
     </div>
 
     <!-- Mine Page -->
-    <div id="page-mine" class="page">
-      <h2>My Personas</h2>
+    <div id="page-mine" class="page" style="padding: 16px">
+      <h2>MY PUPPETS</h2>
       <div class="status" id="status-mine"></div>
       <div id="persona-list-mine" class="persona-grid"></div>
     </div>

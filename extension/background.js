@@ -1,8 +1,10 @@
-const DECIDE_URL = "http://localhost:8000/decide";
+// Native messaging host name (must match the manifest name)
+const NATIVE_HOST = "com.puppeteer.native";
+
 // background.js
 /*
 listen for tab changes
-send page summaries to python backend
+send page summaries to python backend via native messaging
 receive LLM decisions
 open new tabs or simulate activity
 */
@@ -92,28 +94,69 @@ browser.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   }
 });
 
+/**
+ * Send a message via native messaging to the native host
+ * @param {Object} message The message to send
+ * @returns {Promise} Response from the native host
+ */
+async function sendNativeMessage(message) {
+  return new Promise((resolve, reject) => {
+    try {
+      console.log("[background] sending native message:", message);
+      browser.runtime.sendNativeMessage(NATIVE_HOST, message, (response) => {
+        if (browser.runtime.lastError) {
+          console.error(
+            "[background] native messaging error:",
+            browser.runtime.lastError,
+          );
+          reject(new Error(browser.runtime.lastError.message));
+        } else {
+          console.log("[background] native message response:", response);
+          resolve(response);
+        }
+      });
+    } catch (e) {
+      console.error("[background] failed to send native message:", e);
+      reject(e);
+    }
+  });
+}
+
+/**
+ * Fetch API via native messaging
+ * @param {string} url The API endpoint path (e.g., '/decide')
+ * @param {Object} options Request options
+ * @returns {Promise} API response
+ */
 async function apiFetch(url, options = {}) {
   try {
     const { user_id } = await browser.storage.local.get("user_id");
-    const uid = user_id || "dev-user"; // temporary fallback for debugging
+    const uid = user_id || "dev-user";
 
     console.log(`[background apiFetch] url: ${url} (user_id: ${uid})`);
 
-    const resp = await fetch(`http://localhost:8000${url}`, {
-      ...options,
-      headers: {
-        ...(options.headers || {}),
-        "Content-Type": "application/json",
-        "X-User-Id": uid,
+    // Prepare request body if needed
+    let body = options.body;
+    if (body && typeof body === "object") {
+      body = JSON.stringify(body);
+    }
+
+    // Send via native messaging
+    const response = await sendNativeMessage({
+      type: "API_FETCH",
+      path: url,
+      options: {
+        method: options.method || "GET",
+        headers: {
+          ...(options.headers || {}),
+          "Content-Type": "application/json",
+          "X-User-Id": uid,
+        },
+        body: body,
       },
     });
 
-    const contentType = resp.headers.get("content-type") || "";
-    const body = contentType.includes("application/json")
-      ? await resp.json()
-      : await resp.text();
-
-    return { ok: resp.ok, status: resp.status, body };
+    return response;
   } catch (e) {
     console.error("[apiFetch] exception:", e);
     return { ok: false, status: 0, body: String(e) };
@@ -226,21 +269,23 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
         decideRequest,
       );
 
-      const res = await fetch(DECIDE_URL, {
+      // Send decision request via native messaging
+      const response = await apiFetch("/decide", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(decideRequest),
       });
 
-      console.log("[background] sent page summary to backend");
+      console.log(
+        "[background] backend response via native messaging:",
+        response,
+      );
 
-      if (!res.ok) {
-        const text = await res.text();
-        console.error("[background] backend error:", text);
-        return { ok: false, error: `HTTP ${res.status}: ${text}` };
+      if (!response.ok) {
+        console.error("[background] backend error:", response.body);
+        return { ok: false, error: `Backend error: ${response.body}` };
       }
 
-      const raw = await res.json();
+      const raw = response.body;
       console.log("[background] raw backend response:", raw);
 
       // Unwrap common Llama/Ollama envelope:
@@ -273,20 +318,6 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
 
   // ignore unknown messages
 });
-
-async function handleApiFetch(msg) {
-  try {
-    const { path, options } = msg;
-
-    const result = await apiFetch(path, options || {}); // ✅ await!
-    console.log("[background] API_FETCH returning:", result);
-
-    return result; // ✅ returns { ok, status, body }
-  } catch (e) {
-    console.error("[background] API_FETCH failed:", e);
-    return { ok: false, status: 0, body: String(e) };
-  }
-}
 
 // Pop up when clicked
 browser.browserAction.onClicked.addListener(() => {

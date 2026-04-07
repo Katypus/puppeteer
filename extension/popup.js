@@ -19,6 +19,7 @@ async function getSelectedPersona() {
 
 async function updateCurrentPersona() {
   const selected = await getSelectedPersona();
+  console.log("[popup] selected persona from storage:", selected);
   const el = document.getElementById("current-persona");
   el.textContent = selected
     ? `Current: ${selected.name}`
@@ -114,15 +115,18 @@ function updateSpriteForPersona(persona) {
   const setLayerSrc = (id, path) => {
     const el = document.getElementById(id);
     if (!el) return;
-    el.src = path;
     el.onerror = () => {
+      console.warn(`[popup] failed to load sprite ${path}`);
       el.style.display = "none";
     };
     el.onload = () => {
+      console.log(`[popup] loaded sprite ${path}`);
       el.style.display = "block";
     };
+    el.src = path;
   };
 
+  console.log("[popup] updating sprites for persona:", persona);
   setLayerSrc("sprite-politics", `sprite/politics/${politicsId}.png`);
   setLayerSrc("sprite-race", `sprite/race/${raceFile}`);
   setLayerSrc("sprite-risk", `sprite/risk/${riskId}.png`);

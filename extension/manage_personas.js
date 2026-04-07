@@ -366,4 +366,5 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   wireSpriteInputs();
+  setActivePage("public");
 });

@@ -2,17 +2,22 @@
   "manifest_version": 2,
   "name": "Puppeteer",
   "version": "1.0",
-  "description": "AI personas that browse to obfuscate behavior",
+  "description": "Cut your strings and spin new ones.",
+  "applications": {
+    "gecko": {
+      "id": "puppeteer@example.com"
+    }
+  },
   "permissions": [
     "tabs",
     "storage",
     "scripting",
     "activeTab",
+    "nativeMessaging",
     "<all_urls>",
     "https://www.google.com/*",
     "https://www.bing.com/*",
-    "https://duckduckgo.com/*",
-    "https://puppeteer-devw.onrender.com/*"
+    "https://duckduckgo.com/*"
   ],
   "background": {
     "scripts": ["background.js"]
