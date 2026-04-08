@@ -1,5 +1,5 @@
 // Native messaging host name (must match the manifest name)
-const NATIVE_HOST = "host-manifest";
+const NATIVE_HOST = "com.puppeteer.native";
 
 // background.js
 /*

@@ -1,6 +1,0 @@
-{
-  "name": "host-manifest",
-  "description": "Native messaging host for Puppeteer Firefox Extension",
-  "path": "C:\\Program Files\\Puppeteer\\puppeteer-host.exe",
-  "allowed_extensions": ["puppeteer@example.com"]
-}
