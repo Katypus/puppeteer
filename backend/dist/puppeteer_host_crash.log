@@ -1,0 +1,5 @@
+=== process start ===
+argv: ['puppeteer-host.exe', '--setup']
+about to run asyncio.run(main())
+entered main()
+setup flag detected

@@ -32,5 +32,5 @@ missing module named multiprocessing.TimeoutError - imported by multiprocessing 
 missing module named multiprocessing.set_start_method - imported by multiprocessing (top-level), multiprocessing.spawn (top-level)
 missing module named multiprocessing.get_start_method - imported by multiprocessing (top-level), multiprocessing.spawn (top-level)
 missing module named pyimod02_importers - imported by C:\Users\sapph\AppData\Local\Programs\Python\Python312\Lib\site-packages\PyInstaller\hooks\rthooks\pyi_rth_pkgutil.py (delayed)
+missing module named httpx - imported by C:\Users\sapph\Downloads\puppeteer\backend\native_messaging_host.py (delayed)
 missing module named asyncio.DefaultEventLoopPolicy - imported by asyncio (delayed, conditional), asyncio.events (delayed, conditional)
-missing module named httpx - imported by C:\Users\sapph\Downloads\puppeteer\backend\native_messaging_host.py (optional)
