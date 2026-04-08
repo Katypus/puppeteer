@@ -209,6 +209,41 @@
         padding: 40px 20px;
         opacity: 0.7;
       }
+      input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        background: #a63a50;
+        height: 6px;
+        border-radius: 3px;
+        outline: none;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #a63a50;
+        cursor: pointer;
+      }
+      input[type="range"]::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #a63a50;
+        cursor: pointer;
+        border: none;
+      }
+      .slider {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .slider-value {
+        font-size: 14px;
+        color: #1b264f;
+        min-width: 20px;
+      }
     </style>
   </head>
   <body>
@@ -246,18 +281,21 @@
           <br />
           <div class="slider">
             <input type="range" id="risk" min="0" max="10" step="1" />
+            <span class="slider-value" id="risk-value">0</span>
           </div>
           <br />
           <label>Attention</label>
           <br />
           <div class="slider">
             <input type="range" id="attention" min="0" max="10" step="1" />
+            <span class="slider-value" id="attention-value">0</span>
           </div>
           <br />
           <label>Patience</label>
           <br />
           <div class="slider">
             <input type="range" id="patience" min="0" max="10" step="1" />
+            <span class="slider-value" id="patience-value">0</span>
           </div>
           <br />
           <label>Interests (comma-separated)</label>
@@ -281,6 +319,7 @@
           <label>Politics</label>
           <div class="slider">
             <input type="range" id="politics" min="0" max="10" step="1" />
+            <span class="slider-value" id="politics-value">0</span>
           </div>
           <label>Age</label>
           <br />

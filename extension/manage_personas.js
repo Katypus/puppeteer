@@ -193,6 +193,17 @@ function wireSpriteInputs() {
       input.tagName.toLowerCase() === "select" ? "change" : "input";
     input.addEventListener(eventName, updateSpriteWindow);
   });
+  // Wire slider value displays
+  ["risk", "attention", "patience", "politics"].forEach((field) => {
+    const input = document.getElementById(field);
+    const valueEl = document.getElementById(`${field}-value`);
+    if (!input || !valueEl) return;
+    input.addEventListener("input", () => {
+      valueEl.textContent = input.value;
+    });
+    // Initialize value
+    valueEl.textContent = input.value;
+  });
   // Initialize race value on load
   const initialRaceValue = document.getElementById("race").value;
   if (initialRaceValue) {

@@ -16,6 +16,7 @@ import struct
 import logging
 from pathlib import Path
 import traceback
+from setup_wizard import run_setup_wizard, should_run_setup
 
 # Configure logging to file (avoid stderr which breaks native messaging)
 log_dir = Path.home() / ".puppeteer_logs"
@@ -158,7 +159,8 @@ async def handle_api_request(path, options=None):
 async def main():
     """Main native messaging host loop."""
     logger.info("Native messaging host main loop started")
-    
+    if should_run_setup(sys.argv):
+        return run_setup_wizard()
     try:
         while True:
             try:

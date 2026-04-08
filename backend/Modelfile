@@ -34,5 +34,6 @@ Available actions (choose ONE):
     - If the page is a search results page, use open_result instead of click.
     - Do NOT repeat the same action with the same target/value as the last step.
     - If there are no links available, search or back
+    - Make human like queries e.g. no capital letters, no special characters.
 
 """
