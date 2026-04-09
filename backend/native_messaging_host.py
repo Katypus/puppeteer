@@ -112,6 +112,84 @@ async def handle_api_request(path, options=None):
         logger.error(f"API request failed: {e}", exc_info=True)
         return {"ok": False, "status": 0, "body": str(e)}
 
+import os
+import socket
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+FASTAPI_HOST = "127.0.0.1"
+FASTAPI_PORT = 8000
+
+def is_fastapi_running(host: str = FASTAPI_HOST, port: int = FASTAPI_PORT, timeout: float = 0.5) -> bool:
+    try:
+        with socket.create_connection((host, port), timeout=timeout):
+            return True
+    except OSError:
+        return False
+
+def get_backend_log_paths() -> tuple[Path, Path]:
+    log_dir = Path.home() / ".puppeteer_logs"
+    log_dir.mkdir(exist_ok=True)
+    return log_dir / "fastapi_stdout.log", log_dir / "fastapi_stderr.log"
+
+def start_fastapi_subprocess() -> subprocess.Popen:
+    stdout_log, stderr_log = get_backend_log_paths()
+
+    # Adjust this if your entrypoint is not app:app
+    app_import = "app:app"
+
+    # If the exe is installed, this tries to run uvicorn from the same Python environment
+    # that built the native host. For a frozen app, you may instead need a bundled backend launcher.
+    cmd = [
+        sys.executable,
+        "-m",
+        "uvicorn",
+        app_import,
+        "--host",
+        FASTAPI_HOST,
+        "--port",
+        str(FASTAPI_PORT),
+        "--log-level",
+        "info",
+    ]
+
+    stdout_f = open(stdout_log, "a", encoding="utf-8")
+    stderr_f = open(stderr_log, "a", encoding="utf-8")
+
+    creationflags = 0
+    if os.name == "nt":
+        creationflags = subprocess.CREATE_NO_WINDOW
+
+    proc = subprocess.Popen(
+        cmd,
+        stdout=stdout_f,
+        stderr=stderr_f,
+        stdin=subprocess.DEVNULL,
+        creationflags=creationflags,
+        cwd=str(Path(__file__).resolve().parent),
+    )
+    return proc
+
+def ensure_fastapi_running(start_timeout: float = 8.0) -> bool:
+    if is_fastapi_running():
+        return True
+
+    proc = start_fastapi_subprocess()
+
+    deadline = time.time() + start_timeout
+    while time.time() < deadline:
+        if is_fastapi_running():
+            return True
+
+        # Process exited early
+        if proc.poll() is not None:
+            return False
+
+        time.sleep(0.25)
+
+    return False
 
 async def main():
     logger.info("Native messaging host main loop started")
@@ -121,7 +199,11 @@ async def main():
         log_line("setup flag detected")
         from setup_wizard import run_setup_wizard
         return run_setup_wizard()
-
+    
+    if not ensure_fastapi_running():
+        logger.error("FastAPI failed to start or did not become reachable on 127.0.0.1:8000")
+        # You can still continue, but requests will fail.
+        # Or return a fatal error here if you want.
     try:
         while True:
             message = read_message()
