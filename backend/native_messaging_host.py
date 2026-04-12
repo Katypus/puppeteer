@@ -29,9 +29,11 @@ def setup_native_messaging_if_needed():
             install_dir = Path(__file__).parent
 
         manifest_path = install_dir / "com.puppeteer.native.json"
+        host_exe_path = install_dir / "puppeteer-host.exe"
         batch_path = install_dir / "puppeteer_native_host.bat"
+        host_command_path = host_exe_path if host_exe_path.exists() else batch_path
 
-        if not manifest_path.exists() or not batch_path.exists():
+        if not manifest_path.exists() or not host_command_path.exists():
             log_line(f"setup_native_messaging: missing files in {install_dir}")
             return
 
@@ -39,7 +41,7 @@ def setup_native_messaging_if_needed():
         try:
             with open(manifest_path) as f:
                 existing = json.load(f)
-            manifest_needs_update = existing.get("path") != str(batch_path)
+            manifest_needs_update = existing.get("path") != str(host_command_path)
         except Exception:
             manifest_needs_update = True
 
@@ -47,7 +49,7 @@ def setup_native_messaging_if_needed():
             manifest_data = {
                 "name": "com.puppeteer.native",
                 "description": "Native messaging host for Puppeteer Firefox Extension",
-                "path": str(batch_path),
+                "path": str(host_command_path),
                 "type": "stdio",
                 "allowed_extensions": ["puppeteer@example.com"]
             }
