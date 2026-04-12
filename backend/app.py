@@ -1,14 +1,18 @@
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent))
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from typing import List, Literal
-from backend.models import Persona
+from models import Persona
 import httpx
 import json
 from fastapi.middleware.cors import CORSMiddleware
-from backend.personas import router as personas_router
-from backend.schema import PersonaPost, PersonaGet, PageSummary, Decision, DecideRequest
+from personas import router as personas_router
+from schema import PersonaPost, PersonaGet, PageSummary, Decision, DecideRequest
 
 app = FastAPI()
 app.include_router(personas_router)

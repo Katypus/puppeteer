@@ -1,10 +1,14 @@
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent))
+
 # auth.py
 from fastapi import Header, HTTPException, Depends
 from sqlalchemy.orm import Session
 from uuid import UUID
 
-from backend.database import SessionLocal
-from backend.user_crud import get_or_create_user
+from database import SessionLocal
+from user_crud import get_or_create_user
 
 def get_db():
     db = SessionLocal()

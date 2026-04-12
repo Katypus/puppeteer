@@ -1,9 +1,13 @@
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent))
+
 # create/list/publish personas
 from requests import Session
 from sqlalchemy import or_
 
-from backend.database import SessionLocal
-from backend.models import Persona
+from database import SessionLocal
+from models import Persona
 
 def create_persona(database: Session, user_id, persona_data: dict):
     persona = Persona(

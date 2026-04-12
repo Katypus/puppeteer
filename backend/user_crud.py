@@ -1,7 +1,11 @@
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent))
+
 # user_crud.py
 from sqlalchemy.orm import Session
 from uuid import UUID
-from backend.models import User
+from models import User
 
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 

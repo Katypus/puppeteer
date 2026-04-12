@@ -25,7 +25,7 @@ document
         .map((s) => s.trim()),
     };
 
-    await apiFetch("/personas", {
+    await apiFetch("/personas/", {
       method: "POST",
       body: JSON.stringify(data),
     });
@@ -47,7 +47,15 @@ async function apiFetch(path, options = {}) {
       "[persona.js apiFetch] got undefined — background did not respond properly",
     );
   }
+  console.log(
+    "[persona.js apiFetch] full result object:",
+    JSON.stringify(result),
+  );
   if (!result.ok) {
+    console.error(
+      `[persona.js apiFetch] non-ok — status: ${result.status}, body:`,
+      result.body,
+    );
     throw new Error(`API ${result.status}: ${JSON.stringify(result.body)}`);
   }
   return result;
@@ -361,6 +369,9 @@ async function loadPersonas(route, pageType) {
       );
   } catch (e) {
     console.error("[loadPersonas] failed:", e);
+    console.error("[loadPersonas] error name:", e?.name);
+    console.error("[loadPersonas] error message:", e?.message);
+    console.error("[loadPersonas] error stack:", e?.stack);
     showError(String(e));
     if (statusEl) setStatus("Error", statusElId);
   }

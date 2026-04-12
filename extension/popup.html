@@ -4,19 +4,23 @@
     <title>Puppeteer</title>
     <style>
       @font-face {
-        font-family: 'PixelifySans';
-        src: url('PixelifySans-VariableFont_wght.ttf') format('truetype');
+        font-family: "PixelifySans";
+        src: url("PixelifySans-VariableFont_wght.ttf") format("truetype");
       }
       body {
-        font-family: 'PixelifySans', sans-serif;
+        font-family: "PixelifySans", sans-serif;
         margin: 16px;
         width: 300px;
+        background: #bca371;
+        position: relative;
+        text-align: center;
       }
       .row {
         display: flex;
         gap: 12px;
         align-items: center;
         margin-bottom: 12px;
+        justify-content: center;
       }
       .status {
         font-size: 12px;
@@ -34,6 +38,15 @@
         max-width: 100%;
         height: auto;
       }
+      button {
+        border: 3px solid #a63a50;
+        background: #ad7d7d;
+        padding: 8px 16px;
+        cursor: pointer;
+        font-family: "PixelifySans", sans-serif;
+        border-radius: 0;
+        box-shadow: none;
+      }
     </style>
   </head>
   <body>
@@ -43,10 +56,10 @@
 
     <div
       id="current-persona"
-      style="margin-bottom: 12px; font-weight: bold"
+      style="margin-bottom: 12px; font-weight: bold; text-align: center"
     ></div>
 
-    <h2 style="margin: 0 0 8px 0">Sprite Preview</h2>
+    <h2 style="margin: 0 0 8px 0">Active Puppet</h2>
     <div
       id="sprite-window"
       style="
@@ -57,57 +70,28 @@
         background: #ddd;
         overflow: hidden;
         margin-bottom: 12px;
+        margin: 0 auto 12px auto;
       "
     >
       <img
         id="sprite-politics"
-        style="
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 256px;
-          height: 256px;
-        "
+        style="position: absolute; top: 0; left: 0; width: 256px; height: 256px"
       />
       <img
         id="sprite-race"
-        style="
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 256px;
-          height: 256px;
-        "
+        style="position: absolute; top: 0; left: 0; width: 256px; height: 256px"
       />
       <img
         id="sprite-risk"
-        style="
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 256px;
-          height: 256px;
-        "
+        style="position: absolute; top: 0; left: 0; width: 256px; height: 256px"
       />
       <img
         id="sprite-age"
-        style="
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 256px;
-          height: 256px;
-        "
+        style="position: absolute; top: 0; left: 0; width: 256px; height: 256px"
       />
       <img
         id="sprite-gender"
-        style="
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 256px;
-          height: 256px;
-        "
+        style="position: absolute; top: 0; left: 0; width: 256px; height: 256px"
       />
     </div>
 
@@ -117,12 +101,27 @@
     </div>
 
     <div class="row">
-      <button id="manageBtn">Manage Personas</button>
+      <button id="manageBtn">Go to The Puppet Workshop</button>
     </div>
 
-    <div id="error" class="error" style="display: none"></div>
+    <div
+      id="error"
+      class="error"
+      style="display: none; text-align: center"
+    ></div>
+
+    <img
+      src="sprite/spotlight.png"
+      style="
+        position: absolute;
+        top: 120px;
+        right: 20px;
+        z-index: 10;
+        max-width: 50%;
+        height: auto;
+      "
+    />
 
     <script src="popup.js"></script>
   </body>
-</html></content>
-<parameter name="filePath">c:\Users\sapph\Downloads\puppeteer\extension\popup.html
+</html>

@@ -1,7 +1,11 @@
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent))
+
 from sqlalchemy import Column, String, Text, Enum, JSON, ForeignKey, TIMESTAMP, Boolean, Integer, CheckConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from backend.database import Base
+from database import Base
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
 import enum
