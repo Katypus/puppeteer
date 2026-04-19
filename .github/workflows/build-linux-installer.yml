@@ -43,6 +43,7 @@ jobs:
 
           cp dist/puppeteer-host pkgroot/opt/puppeteer/backend/
           cp dist/puppeteer-backend pkgroot/opt/puppeteer/backend/
+          cp backend/Modelfile pkgroot/opt/puppeteer/backend/
           cp packaging/linux/puppeteer_native_host.sh pkgroot/opt/puppeteer/backend/
           chmod +x pkgroot/opt/puppeteer/backend/puppeteer_native_host.sh
 
