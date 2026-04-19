@@ -6,9 +6,13 @@ import logging
 from pathlib import Path
 import asyncio
 import traceback
-import winreg
 import os
 import httpx
+
+if sys.platform == "win32":
+    import winreg
+else:
+    winreg = None
 
 CRASH_LOG = Path.cwd() / "puppeteer_host_crash.log"
 
@@ -18,7 +22,7 @@ def setup_native_messaging_if_needed():
     Always checks that the manifest path and registry entry match the current
     install location — handles fresh installs, reinstalls, and moved installations.
     """
-    if sys.platform != "win32":
+    if sys.platform != "win32" or winreg is None:
         return  # Only relevant on Windows
 
     try:
@@ -204,16 +208,19 @@ def get_backend_log_paths() -> tuple[Path, Path]:
 
 def get_backend_exe_path() -> Path:
     """
-    Find the bundled puppeteer-backend.exe.
-    When frozen by PyInstaller, it sits next to puppeteer-host.exe.
+    Find the bundled backend executable for the current platform.
+    On Windows this is puppeteer-backend.exe.
+    On Linux this is puppeteer-backend.
     When running from source, it's in the dist/ subfolder.
     """
+    backend_name = "puppeteer-backend.exe" if os.name == "nt" else "puppeteer-backend"
+
     # PyInstaller: sys.executable is the .exe itself; siblings live in the same folder
     if getattr(sys, "frozen", False):
-        return Path(sys.executable).parent / "puppeteer-backend.exe"
+        return Path(sys.executable).parent / backend_name
 
     # Running from source — check dist/ relative to this file
-    return Path(__file__).parent / "dist" / "puppeteer-backend.exe"
+    return Path(__file__).parent / "dist" / backend_name
 
 def start_fastapi_subprocess() -> subprocess.Popen:
     stdout_log, stderr_log = get_backend_log_paths()

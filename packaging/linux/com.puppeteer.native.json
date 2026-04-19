@@ -1,0 +1,7 @@
+{
+  "name": "com.puppeteer.native",
+  "description": "Native messaging host for Puppeteer Firefox Extension",
+  "path": "/opt/puppeteer/backend/puppeteer_native_host.sh",
+  "type": "stdio",
+  "allowed_extensions": ["puppeteer@example.com"]
+}
