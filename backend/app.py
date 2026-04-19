@@ -10,14 +10,15 @@ from typing import List, Literal
 from models import Persona
 import httpx
 import json
+import os
 from fastapi.middleware.cors import CORSMiddleware
 from personas import router as personas_router
 from schema import PersonaPost, PersonaGet, PageSummary, Decision, DecideRequest
 
 app = FastAPI()
 app.include_router(personas_router)
-OLLAMA_URL = "http://localhost:11434/api/generate"
-MODEL_NAME = "persona"
+OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/api/generate")
+MODEL_NAME = os.getenv("OLLAMA_MODEL", "persona")
 
 # allows CORS settings for our extension to call the API without issues
 app.add_middleware(
@@ -57,26 +58,63 @@ def build_prompt(persona: Persona, page: PageSummary, history: list) -> str:
 async def query_llama(prompt: str) -> str:
     # adjust timeout here
     timeout = httpx.Timeout(120.0, connect=5.0)
-    async with httpx.AsyncClient(timeout=timeout) as client:
-        response = await client.post(
-            OLLAMA_URL,
-            json={
-                "model": MODEL_NAME,
-                "prompt": prompt,
-                "stream": False,
-                "format": "json",   # 👈 important
-                "options": {
-                    "temperature": 0.0,
-                    "num_predict": 50,
-                    "stop": ["\n\n", "\n```", "```"]
+    try:
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            response = await client.post(
+                OLLAMA_URL,
+                json={
+                    "model": MODEL_NAME,
+                    "prompt": prompt,
+                    "stream": False,
+                    "format": "json",   # 👈 important
+                    "options": {
+                        "temperature": 0.0,
+                        "num_predict": 50,
+                        "stop": ["\n\n", "\n```", "```"]
+                    }
                 }
-            }
-        )
+            )
+    except httpx.ConnectError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                f"Cannot connect to Ollama at {OLLAMA_URL}. "
+                "Start Ollama and verify it is reachable on localhost:11434."
+            ),
+        ) from e
+    except httpx.TimeoutException as e:
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                f"Ollama request timed out for model '{MODEL_NAME}'. "
+                "Try again or increase timeout."
+            ),
+        ) from e
     print("LLAMA RAW RESPONSE:", response.text)  # 🔥 Debug print
     if response.status_code != 200:
-        raise HTTPException(status_code=500, detail="LLM request failed")
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": "LLM request failed",
+                "ollama_status": response.status_code,
+                "ollama_url": OLLAMA_URL,
+                "model": MODEL_NAME,
+                "ollama_body": response.text,
+            },
+        )
 
-    return response.json()["response"]
+    try:
+        return response.json()["response"]
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": "Unexpected Ollama response format",
+                "ollama_url": OLLAMA_URL,
+                "model": MODEL_NAME,
+                "ollama_body": response.text,
+            },
+        ) from e
 
 #TODO: update this method
 def validate_decision(d: Decision) -> Decision:

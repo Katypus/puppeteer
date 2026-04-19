@@ -2,6 +2,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import webbrowser
 from pathlib import Path
 from typing import Optional, Tuple
@@ -11,6 +12,48 @@ from tkinter import messagebox
 
 
 OLLAMA_DOWNLOAD_URL = "https://ollama.com/download/windows"
+PERSONA_MODEL_NAME = os.environ.get("OLLAMA_MODEL", "persona")
+
+PERSONA_MODELFILE_CONTENT = '''FROM phi3
+
+SYSTEM """
+You are a web browsing persona agent.
+Available actions (choose ONE):
+
+    1. search:
+    {{"action":"search","value":"query"}}
+
+    2. open_result:
+    {{"action":"open_result","rank":1-5}}
+
+    3. read:
+    {{"action":"read","seconds":3-15}}
+
+    4. click:
+    {{"action":"click","target":"visible link text"}}
+
+    5. scroll:
+    {{"action":"scroll","value":"up"|"down"}}
+
+    6. back:
+    {{"action":"back"}}
+
+    7. noop:
+    {{"action":"noop","reason":"why"}}
+
+    Rules:
+    - Prefer: search -> open_result -> read -> click -> scroll -> back, repeat.
+    - NEVER put a URL in click.target
+    - Output ONLY valid JSON
+    - Do NOT include explanations outside JSON
+    - If you have already read the current page and there are candidate links in the summary, your next action should usually be `click`.
+    - If the page is a search results page, use open_result instead of click.
+    - Do NOT repeat the same action with the same target/value as the last step.
+    - If there are no links available, search or back
+    - Make human like queries e.g. no capital letters, no special characters.
+
+"""
+'''
 
 
 def _candidate_ollama_paths() -> list[Path]:
@@ -66,6 +109,71 @@ def get_ollama_version(ollama_path: str) -> Tuple[bool, str]:
     if result.returncode == 0:
         return True, output or "Ollama is installed."
     return False, output or f"Ollama exited with code {result.returncode}."
+
+
+def model_exists(ollama_path: str, model_name: str) -> Tuple[bool, str]:
+    """
+    Returns (exists, detail). exists=True when model appears in `ollama list` output.
+    """
+    try:
+        result = subprocess.run(
+            [ollama_path, "list"],
+            capture_output=True,
+            text=True,
+            timeout=20,
+            check=False,
+        )
+    except Exception as exc:
+        return False, f"Failed to query models: {exc}"
+
+    output = (result.stdout or result.stderr or "").strip()
+    if result.returncode != 0:
+        return False, output or f"ollama list failed with code {result.returncode}."
+
+    # `ollama list` rows start with NAME, e.g. `persona:latest`.
+    prefix = f"{model_name}:"
+    for line in output.splitlines():
+        row = line.strip()
+        if not row or row.upper().startswith("NAME"):
+            continue
+        if row.startswith(prefix) or row == model_name:
+            return True, f"Model '{model_name}' is installed."
+
+    return False, f"Model '{model_name}' was not found."
+
+
+def create_persona_model(ollama_path: str, model_name: str) -> Tuple[bool, str]:
+    """
+    Creates the model using an embedded Modelfile so this works in EXE-only installs.
+    """
+    tmp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".Modelfile", delete=False, encoding="utf-8"
+        ) as tmp:
+            tmp.write(PERSONA_MODELFILE_CONTENT)
+            tmp_path = tmp.name
+
+        result = subprocess.run(
+            [ollama_path, "create", model_name, "-f", tmp_path],
+            capture_output=True,
+            text=True,
+            timeout=180,
+            check=False,
+        )
+    except Exception as exc:
+        return False, f"Failed to create model '{model_name}': {exc}"
+    finally:
+        if tmp_path:
+            try:
+                Path(tmp_path).unlink(missing_ok=True)
+            except Exception:
+                pass
+
+    output = (result.stdout or result.stderr or "").strip()
+    if result.returncode == 0:
+        return True, output or f"Model '{model_name}' created successfully."
+    return False, output or f"Model creation failed with code {result.returncode}."
 
 
 class SetupWizard:
@@ -176,9 +284,36 @@ class SetupWizard:
 
         ok, version_text = get_ollama_version(ollama_path)
         if ok:
-            self.status_var.set("Ollama is installed.")
-            self.detail_var.set(f"Found at:\n{ollama_path}\n\nVersion:\n{version_text}")
-            self.continue_button.config(state="normal")
+            exists, model_detail = model_exists(ollama_path, PERSONA_MODEL_NAME)
+            if exists:
+                self.status_var.set("Ollama and persona model are ready.")
+                self.detail_var.set(
+                    f"Found at:\n{ollama_path}\n\nVersion:\n{version_text}\n\n{model_detail}"
+                )
+                self.continue_button.config(state="normal")
+                return
+
+            self.status_var.set("Ollama is installed, but persona model is missing.")
+            self.detail_var.set(
+                "Building the model now from embedded setup data. This can take a minute..."
+            )
+            self.root.update_idletasks()
+
+            created, create_output = create_persona_model(ollama_path, PERSONA_MODEL_NAME)
+            if created:
+                self.status_var.set("Ollama and persona model are ready.")
+                self.detail_var.set(
+                    f"Found at:\n{ollama_path}\n\nVersion:\n{version_text}\n\n"
+                    f"Model '{PERSONA_MODEL_NAME}' was created successfully."
+                )
+                self.continue_button.config(state="normal")
+            else:
+                self.status_var.set("Model creation failed.")
+                self.detail_var.set(
+                    f"Ollama is installed, but model '{PERSONA_MODEL_NAME}' could not be created.\n\n"
+                    f"Details:\n{create_output}"
+                )
+                self.continue_button.config(state="disabled")
         else:
             self.status_var.set("Ollama was found, but it did not run correctly.")
             self.detail_var.set(f"Found at:\n{ollama_path}\n\nProblem:\n{version_text}")
@@ -195,7 +330,7 @@ class SetupWizard:
     def finish_success(self) -> None:
         messagebox.showinfo(
             "Setup complete",
-            "Ollama is installed and responding.\n\n"
+            f"Ollama is installed and model '{PERSONA_MODEL_NAME}' is ready.\n\n"
             "You can move on to the next setup step.",
         )
         self.root.destroy()

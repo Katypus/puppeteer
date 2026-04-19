@@ -290,3 +290,11 @@ entered main()
 argv: ['C:\\Users\\sapph\\Downloads\\puppeteer\\backend\\native_messaging_host.py']
 about to run asyncio.run(main())
 entered main()
+=== process start ===
+argv: ['C:\\Users\\sapph\\Downloads\\puppeteer\\backend\\native_messaging_host.py']
+about to run asyncio.run(main())
+entered main()
+=== process start ===
+argv: ['C:\\Users\\sapph\\Downloads\\puppeteer\\backend\\native_messaging_host.py']
+about to run asyncio.run(main())
+entered main()

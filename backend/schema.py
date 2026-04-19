@@ -16,13 +16,13 @@ class PersonaPost(BaseModel):
     age: int = Field(default=30, ge=0)
     gender: str = "unspecified"
     race: str = "unspecified"
-    ## POLITICAL INDEX (0 is left, 10 is right)
-    politics: float = Field(default=5, ge=0, le=10)
+    ## POLITICAL INDEX (1 is left, 10 is right)
+    politics: int = Field(default=5, ge=1, le=10)
     
     # BROWSING BEHAVIOR TRAITS (1-10 scale)
-    risk: float = Field(default=5, ge=0, le=10)
-    attention: float = Field(default=5, ge=0, le=10)
-    patience: float = Field(default=5, ge=0, le=10)
+    risk: int = Field(default=5, ge=1, le=10)
+    attention: int = Field(default=5, ge=1, le=10)
+    patience: int = Field(default=5, ge=1, le=10)
 
 class PersonaGet(BaseModel):
     id: UUID
@@ -38,13 +38,13 @@ class PersonaGet(BaseModel):
     age: int = Field(default=30, ge=0)
     gender: str = "unspecified"
     race: str = "unspecified"
-    ## POLITICAL INDEX (0 is left, 10 is right)
-    politics: float = Field(default=5, ge=0, le=10)
+    ## POLITICAL INDEX (1 is left, 10 is right)
+    politics: int = Field(default=5, ge=1, le=10)
     
     # BROWSING BEHAVIOR TRAITS (1-10 scale)
-    risk: float = Field(default=5, ge=0, le=10)
-    attention: float = Field(default=5, ge=0, le=10)
-    patience: float = Field(default=5, ge=0, le=10)
+    risk: int = Field(default=5, ge=1, le=10)
+    attention: int = Field(default=5, ge=1, le=10)
+    patience: int = Field(default=5, ge=1, le=10)
 
 class PageSummary(BaseModel):
     url: str

@@ -50,6 +50,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Files]
 Source: "C:\Users\sapph\Downloads\puppeteer\backend\dist\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\sapph\Downloads\puppeteer\backend\dist\puppeteer-backend.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\sapph\Downloads\puppeteer\backend\Modelfile"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\sapph\Downloads\puppeteer\backend\com.puppeteer.native.json"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\sapph\Downloads\puppeteer\backend\puppeteer_native_host.bat"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
